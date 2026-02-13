@@ -197,6 +197,8 @@ steps:
         confirm_progress: false
         loop:
           - kind: s
+            selector: "input#repository-name-input"
+          - kind: s
             selector: "input#repository_name"
           - kind: text_field
             text: "Repository name"
@@ -217,6 +219,8 @@ steps:
 
       - name: Fill repository name (best-effort)
         loop:
+          - kind: s
+            selector: "input#repository-name-input"
           - kind: s
             selector: "input#repository_name"
           - kind: s
@@ -245,16 +249,51 @@ steps:
         params:
           text: 'Could not find the GitHub "Repository name" field. Evidence: ${OUTPUT_DIR}\\debug_evidence'
 
-      - name: Select Private visibility
+      - name: Open visibility dropdown
         action: Helium.Click
-        confirm_after_wait_ms: 400
+        confirm_after_wait_ms: 250
         params:
           port: "${DEBUG_PORT}"
           element:
             kind: s
-            selector: "input#repository_visibility_private"
-          implicit_wait_ms: 8000
-          retry_interval_ms: 200
+            selector: "button#visibility-anchor-button"
+          implicit_wait_ms: 12000
+          retry_interval_ms: 250
+
+      - name: Select Private visibility (prefer direct click)
+        loop:
+          - "Private"
+          - "Privado"
+        steps:
+          - name: Click visibility option: ${loop.item}
+            action: Helium.Click
+            register: vis_opt_click
+            ignore_errors: true
+            confirm_after_wait_ms: 350
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: button
+                text: "${loop.item}"
+              implicit_wait_ms: 3500
+              retry_interval_ms: 200
+          - break_if: "${vis_opt_click.ok}"
+
+      - name: Fallback select Private via keyboard
+        if_not: "${vis_opt_click.ok}"
+        steps:
+          - name: DOWN
+            action: Helium.Press
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              key: "DOWN"
+          - name: ENTER
+            action: Helium.Press
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              key: "ENTER"
 
       - name: Click Create repository
         loop:
