@@ -169,6 +169,14 @@ steps:
             kind: s
             selector: "input"
 
+      - name: Debug probe: GitHub new repo page
+        action: Helium.Probe
+        register: github_new_probe
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+
       - name: Persist GitHub new repo inputs dump (debug)
         action: FS.WriteJson
         ignore_errors: true
@@ -176,6 +184,14 @@ steps:
           path: "${OUTPUT_DIR}\\github_new_inputs.json"
           overwrite: true
           value: "${github_new_inputs}"
+
+      - name: Persist GitHub new repo probe (debug)
+        action: FS.WriteJson
+        ignore_errors: true
+        params:
+          path: "${OUTPUT_DIR}\\github_new_probe.json"
+          overwrite: true
+          value: "${github_new_probe}"
 
       - name: Click repository name field (debug assist)
         confirm_progress: false
