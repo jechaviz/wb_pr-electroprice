@@ -158,6 +158,25 @@ steps:
               timeout_secs: 15
               interval_ms: 300
 
+      - name: Debug dump: visible inputs on GitHub new repo page
+        action: Helium.FindAll
+        register: github_new_inputs
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element:
+            kind: s
+            selector: "input"
+
+      - name: Persist GitHub new repo inputs dump (debug)
+        action: FS.WriteJson
+        ignore_errors: true
+        params:
+          path: "${OUTPUT_DIR}\\github_new_inputs.json"
+          overwrite: true
+          value: "${github_new_inputs}"
+
       - name: Click repository name field (debug assist)
         confirm_progress: false
         loop:
