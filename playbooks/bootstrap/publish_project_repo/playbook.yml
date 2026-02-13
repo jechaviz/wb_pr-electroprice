@@ -206,7 +206,6 @@ steps:
         params:
           text: |
             Could not click the "Create repository" button on GitHub.
-
             Evidence:
             - ${OUTPUT_DIR}\\debug_evidence
 
@@ -238,4 +237,3 @@ steps:
         repo_url: "${PROJECT_REPO_URL}"
         git_url: "${PROJECT_REPO_GIT_URL}"
         push: "${git_push}"
-
