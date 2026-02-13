@@ -48,7 +48,7 @@ steps:
     action: Shell.Run
     register: remote_probe
     params:
-      command: "set GIT_TERMINAL_PROMPT=0 && git -C ${PROJECT_DIR} ls-remote --heads origin main"
+      command: "git -C ${PROJECT_DIR} ls-remote --heads origin main"
       allow_fail: true
       timeout_ms: 25000
 
@@ -222,7 +222,7 @@ steps:
     action: Shell.Run
     register: git_push
     params:
-      command: "set GIT_TERMINAL_PROMPT=0 && git -C ${PROJECT_DIR} push -u origin main"
+      command: "git -C ${PROJECT_DIR} push -u origin main"
       allow_fail: false
       timeout_ms: 240000
 
