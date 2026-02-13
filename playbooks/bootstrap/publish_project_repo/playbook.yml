@@ -204,10 +204,7 @@ steps:
         if_not: "${create_repo_click.ok}"
         action: Fail
         params:
-          text: |
-            Could not click the "Create repository" button on GitHub.
-            Evidence:
-            - ${OUTPUT_DIR}\\debug_evidence
+          text: 'Could not click the "Create repository" button on GitHub. Evidence: ${OUTPUT_DIR}\\debug_evidence'
 
       - name: Wait for created repo page
         action: Helium.WaitUntilUrl
