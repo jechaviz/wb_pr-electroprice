@@ -275,19 +275,30 @@ steps:
       - name: Only when not on login page
         if_not: "${login_page_meta.ok}"
         steps:
-          - name: Abort if TRIAL_EMAIL is missing
-            if_not: "${TRIAL_EMAIL}"
-            action: Fail
+          - name: Wait for trial email field
+            action: Helium.WaitUntil
+            confirm_progress: false
             params:
-              text: |
-                Missing TRIAL_EMAIL (odoo.trial_email).
+              port: "${DEBUG_PORT}"
+              timeout_secs: 25
+              interval_ms: 300
+              exists:
+                kind: s
+                selector: "input[type='email'], input[name*='email' i], input[autocomplete='email']"
 
-                Provide it via:
-                - ${SCRIPT_DIR}\\secrets.yml
-                - ${ROOT_PLAYBOOK_DIR}\\secrets.yml
-                - ${ROOT_PLAYBOOK_DIR}\\.secrets.yml
+          - name: Focus trial email field
+            action: Helium.Click
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: s
+                selector: "input[type='email'], input[name*='email' i], input[autocomplete='email']"
+              implicit_wait_ms: 8000
+              retry_interval_ms: 200
 
-          - name: Fill trial email
+          - name: Fill trial email (from secrets)
+            if: "${TRIAL_EMAIL}"
             action: Helium.Write
             confirm_after_wait_ms: 500
             params:
@@ -298,6 +309,50 @@ steps:
                 selector: "input[type='email'], input[name*='email' i], input[autocomplete='email']"
               implicit_wait_ms: 8000
               retry_interval_ms: 200
+
+          - name: Pick trial email from browser saved autofill (best-effort)
+            if_not: "${TRIAL_EMAIL}"
+            confirm_progress: false
+            steps:
+              - name: Select first suggestion
+                action: Helium.Press
+                confirm_progress: false
+                params:
+                  port: "${DEBUG_PORT}"
+                  key: "DOWN"
+              - name: Accept suggestion
+                action: Helium.Press
+                confirm_progress: false
+                params:
+                  port: "${DEBUG_PORT}"
+                  key: "ENTER"
+              - name: Read selected trial email value
+                action: Helium.GetValue
+                register: trial_email_val
+                confirm_progress: false
+                params:
+                  port: "${DEBUG_PORT}"
+                  element:
+                    kind: s
+                    selector: "input[type='email'], input[name*='email' i], input[autocomplete='email']"
+              - name: Export selected email into context
+                action: Set
+                confirm_progress: false
+                params:
+                  name: TRIAL_EMAIL
+                  value: "${trial_email_val.value}"
+
+          - name: Abort if trial email is still missing
+            if_not: "${TRIAL_EMAIL}"
+            action: Fail
+            params:
+              text: |
+                Missing TRIAL_EMAIL (odoo.trial_email), and browser autofill did not provide a value.
+
+                Provide it via:
+                - ${SCRIPT_DIR}\\secrets.yml
+                - ${ROOT_PLAYBOOK_DIR}\\secrets.yml
+                - ${ROOT_PLAYBOOK_DIR}\\.secrets.yml
 
           - name: Fill trial phone (optional)
             if: "${TRIAL_PHONE}"
