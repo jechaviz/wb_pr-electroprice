@@ -11,7 +11,8 @@ steps:
     action: Helium.WaitUntilUrl
     params:
       port: "${DEBUG_PORT}"
-      url_contains: "www.odoo.com/trial"
+      host_endswith: "odoo.com"
+      url_regex: "i)odoo\\.com(/[^/]+)?/trial"
       timeout_secs: 30
       interval_ms: 400
 
@@ -38,10 +39,13 @@ steps:
 
   - name: Select app tile (eCommerce)
     loop:
+      - "Comercio electrónico"
       - "eCommerce"
       - "Ecommerce"
       - "Website"
+      - "Sitio web"
       - "Shop"
+      - "Tienda"
     steps:
       - name: Click app tile: ${loop.item}
         action: Helium.Click
@@ -53,6 +57,29 @@ steps:
           text: "${loop.item}"
           implicit_wait_ms: 5000
           retry_interval_ms: 200
+
+      - name: Find app tile in-page (Ctrl+F style): ${loop.item}
+        if_not: "${app_click.ok}"
+        action: Helium.FindInPage
+        register: app_find
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${loop.item}"
+          highlight_ms: 1200
+
+      - name: Click app tile via selection point: ${loop.item}
+        if: "${app_find.found}"
+        action: Helium.Click
+        register: app_click
+        ignore_errors: true
+        confirm_after_wait_ms: 1200
+        params:
+          port: "${DEBUG_PORT}"
+          element: "${app_find.point}"
+          implicit_wait_ms: 3000
+          retry_interval_ms: 150
       - break_if: "${app_click.ok}"
 
   - name: Abort if eCommerce app tile was not found
@@ -83,6 +110,29 @@ steps:
             text: "${loop.item}"
           implicit_wait_ms: 5000
           retry_interval_ms: 200
+
+      - name: Find continue in-page (Ctrl+F style): ${loop.item}
+        if_not: "${continue_click.ok}"
+        action: Helium.FindInPage
+        register: continue_find
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${loop.item}"
+          highlight_ms: 1200
+
+      - name: Click continue via selection point: ${loop.item}
+        if: "${continue_find.found}"
+        action: Helium.Click
+        register: continue_click
+        ignore_errors: true
+        confirm_after_wait_ms: 1200
+        params:
+          port: "${DEBUG_PORT}"
+          element: "${continue_find.point}"
+          implicit_wait_ms: 3000
+          retry_interval_ms: 150
       - break_if: "${continue_click.ok}"
 
   - name: Abort if Continue button was not found
