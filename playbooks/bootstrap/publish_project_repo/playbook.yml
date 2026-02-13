@@ -93,7 +93,7 @@ steps:
               port: "${DEBUG_PORT}"
               element:
                 kind: s
-                selector: "input#login_field, input[name='login']"
+                selector: "input#login_field, input[name=login]"
               implicit_wait_ms: 6000
               retry_interval_ms: 200
 
@@ -118,7 +118,7 @@ steps:
               port: "${DEBUG_PORT}"
               element:
                 kind: s
-                selector: "input#password, input[name='password'], input[type='password']"
+                selector: "input#password, input[name=password], input[type=password]"
               implicit_wait_ms: 6000
               retry_interval_ms: 200
 
@@ -166,7 +166,7 @@ steps:
           text: "${PROJECT_REPO_NAME}"
           into:
             kind: s
-            selector: "input#repository_name, input[name='repository[name]']"
+            selector: "input#repository_name"
           implicit_wait_ms: 10000
           retry_interval_ms: 200
 
