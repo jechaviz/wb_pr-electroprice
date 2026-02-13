@@ -158,17 +158,57 @@ steps:
               timeout_secs: 15
               interval_ms: 300
 
-      - name: Fill repository name
-        action: Helium.Write
-        confirm_after_wait_ms: 500
-        params:
-          port: "${DEBUG_PORT}"
-          text: "${PROJECT_REPO_NAME}"
-          into:
-            kind: s
+      - name: Click repository name field (debug assist)
+        confirm_progress: false
+        loop:
+          - kind: s
             selector: "input#repository_name"
-          implicit_wait_ms: 10000
-          retry_interval_ms: 200
+          - kind: text_field
+            text: "Repository name"
+          - kind: text_field
+            text: "Nombre del repositorio"
+        steps:
+          - name: Click field candidate
+            action: Helium.Click
+            register: repo_name_field_click
+            ignore_errors: true
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              element: "${loop.item}"
+              implicit_wait_ms: 2500
+              retry_interval_ms: 200
+          - break_if: "${repo_name_field_click.ok}"
+
+      - name: Fill repository name (best-effort)
+        loop:
+          - kind: s
+            selector: "input#repository_name"
+          - kind: s
+            selector: "input[name='repository[name]']"
+          - kind: text_field
+            text: "Repository name"
+          - kind: text_field
+            text: "Nombre del repositorio"
+        steps:
+          - name: Try write repository name using candidate
+            action: Helium.Write
+            register: repo_name_write
+            ignore_errors: true
+            confirm_after_wait_ms: 500
+            params:
+              port: "${DEBUG_PORT}"
+              text: "${PROJECT_REPO_NAME}"
+              into: "${loop.item}"
+              implicit_wait_ms: 8000
+              retry_interval_ms: 200
+          - break_if: "${repo_name_write.ok}"
+
+      - name: Abort if repository name could not be filled
+        if_not: "${repo_name_write.ok}"
+        action: Fail
+        params:
+          text: 'Could not find the GitHub "Repository name" field. Evidence: ${OUTPUT_DIR}\\debug_evidence'
 
       - name: Select Private visibility
         action: Helium.Click
