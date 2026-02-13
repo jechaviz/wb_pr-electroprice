@@ -1,0 +1,49 @@
+﻿# Framework Growth Log
+
+Tracks extension points discovered during project execution:
+- new skills
+- playbook spec growth
+- category evolution (scraping/automation/testing/etc)
+
+- 2026-02-12 16:17:32 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 16:25:29 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 18:32:13 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 18:33:34 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 18:33:58 | category=ecommerce | note=Electroprice: cloned repo + created Odoo instance + installed eCommerce (interactive playbooks).
+- 2026-02-12 18:43:13 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 18:47:21 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 18:48:48 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 18:53:02 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 18:53:28 | category=ecommerce | new_skill=Ecommerce.WholesalerConnector | spec_extension=connector_contract_v1 | note=Wholesaler integration scaffold and contracts added to project assets.
+- 2026-02-12 18:53:28 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-12 20:59:35 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:00:52 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:02:36 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:04:09 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:07:21 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:08:28 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:10:22 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:11:46 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:14:14 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:14:17 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-12 21:15:30 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:15:33 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-12 21:17:41 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:17:43 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-12 21:19:19 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-12 21:19:21 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-12 22:21:38 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 05:15:01 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 05:16:07 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 05:17:16 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 05:19:17 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 05:20:04 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 05:21:04 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 05:22:15 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 05:23:36 | category=ecommerce | note=Autonomous trial flow upgraded (no blocking prompts, CTA/sign-in retries, form diagnostics, optional ODOO_LOGIN_EMAIL/ODOO_LOGIN_PASSWORD).
+- 2026-02-13 05:28:38 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 12:55:53 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 13:12:18 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 13:15:46 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 13:17:19 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 13:21:32 | category=ecommerce | note=Project initialized from modular framework template

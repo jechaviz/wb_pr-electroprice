@@ -1,0 +1,63 @@
+steps:
+  - name: Ensure git is available
+    action: Shell.Exists
+    register: git_exists
+    params:
+      name: git
+
+  - name: Abort because git is missing
+    if_not: "${git_exists}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Ensure base directory exists
+    action: FS.EnsureDir
+    params:
+      path: "C:\\git\\customers\\bu"
+
+  - name: Check if electroprice repo already exists
+    action: FS.Exists
+    register: repo_exists
+    params:
+      path: "${ELECTROPRICE_REPO_DIR}"
+
+  - name: Existing repo sync policy
+    if: "${repo_exists}"
+    steps:
+      - name: Pull electroprice when sync is enabled
+        if: "${PULL_EXISTING_REPO}"
+        action: Shell.Run
+        register: git_pull
+        params:
+          command: "git -C ${ELECTROPRICE_REPO_DIR} pull"
+          timeout_ms: 180000
+
+      - name: Mark reused clone without pull
+        if_not: "${PULL_EXISTING_REPO}"
+        action: Set
+        params:
+          name: git_pull
+          value: "skipped_existing_repo"
+
+  - name: Clone electroprice (first time)
+    if_not: "${repo_exists}"
+    action: Shell.Run
+    register: git_clone
+    params:
+      command: "git clone ${ELECTROPRICE_GIT_URL} ${ELECTROPRICE_REPO_DIR}"
+      timeout_ms: 300000
+
+  - name: Persist clone/pull artifact
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\electroprice_repo.sync.json"
+      value:
+        repo_dir: "${ELECTROPRICE_REPO_DIR}"
+        repo_url: "${ELECTROPRICE_GIT_URL}"
+        repo_exists: "${repo_exists}"
+        git_exists: "${git_exists}"
+        pull_enabled: "${PULL_EXISTING_REPO}"
+        pull: "${git_pull}"
+        clone: "${git_clone}"
+      overwrite: true

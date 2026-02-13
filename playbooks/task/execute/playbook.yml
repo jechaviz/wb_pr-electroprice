@@ -1,0 +1,202 @@
+steps:
+  - name: Clone/Pull electroprice repo
+    playbook: "../../bootstrap/clone_repo/playbook.yml"
+
+  - name: Reset ODOO_URL context when forcing new trial
+    if: "${FORCE_NEW_ODOO_TRIAL}"
+    action: Set
+    params:
+      name: ODOO_URL
+      value: ""
+
+  - name: Delete previous Odoo URL artifact when forcing new trial
+    if: "${FORCE_NEW_ODOO_TRIAL}"
+    action: FS.Delete
+    params:
+      path: "${OUTPUT_DIR}\\odoo_instance_url.txt"
+
+  - name: Delete previous Odoo URL error artifact when forcing new trial
+    if: "${FORCE_NEW_ODOO_TRIAL}"
+    action: FS.Delete
+    params:
+      path: "${OUTPUT_DIR}\\odoo_instance_url_error.json"
+
+  - name: Delete previous Odoo alias artifact when forcing new trial
+    if: "${FORCE_NEW_ODOO_TRIAL}"
+    action: FS.Delete
+    params:
+      path: "${OUTPUT_DIR}\\odoo_instance_alias.txt"
+
+  - name: Delete previous eCommerce checkpoint when forcing reset
+    if: "${FORCE_RESET_CHECKPOINTS}"
+    action: FS.Delete
+    params:
+      path: "${OUTPUT_DIR}\\odoo_ecommerce_install_checkpoint.json"
+
+  - name: Delete previous operations core checkpoint when forcing reset
+    if: "${FORCE_RESET_CHECKPOINTS}"
+    action: FS.Delete
+    params:
+      path: "${OUTPUT_DIR}\\odoo_operations_core_checkpoint.json"
+
+  - name: Delete previous branding checkpoint when forcing reset
+    if: "${FORCE_RESET_CHECKPOINTS}"
+    action: FS.Delete
+    params:
+      path: "${OUTPUT_DIR}\\odoo_branding_checkpoint.json"
+
+  - name: Delete previous dropshipping checkpoint when forcing reset
+    if: "${FORCE_RESET_CHECKPOINTS}"
+    action: FS.Delete
+    params:
+      path: "${OUTPUT_DIR}\\odoo_dropshipping_ops_checkpoint.json"
+
+  - name: Delete previous wholesaler scaffold checkpoint when forcing reset
+    if: "${FORCE_RESET_CHECKPOINTS}"
+    action: FS.Delete
+    params:
+      path: "${OUTPUT_DIR}\\wholesaler_integration_scaffold_checkpoint.json"
+
+  - name: Optional live Odoo tab discovery
+    if: "${ALLOW_LIVE_ODOO_TAB_DISCOVERY}"
+    if_not: "${FORCE_NEW_ODOO_TRIAL}"
+    steps:
+      - name: Detect live Odoo instance tab via CDP target list
+        action: Shell.RunJson
+        register: live_odoo_target
+        params:
+          command: 'powershell -NoProfile -Command "$targets = Invoke-RestMethod -Uri ''http://127.0.0.1:${DEBUG_PORT}/json'' -TimeoutSec 5; $items = @($targets); if ($targets.PSObject.Properties.Name -contains ''value'') { $items = @($targets.value) }; $base = (''${ODOO_INSTANCE_ALIAS_BASE}'' | Out-String).Trim().ToLower(); $match = $items | Where-Object { if ($_.type -ne ''page'') { return $false }; $u = $_.url; if ($u -notmatch ''\.odoo\.com/'') { return $false }; if ($u -match ''://www\.odoo\.com'' -or $u -match ''/trial'') { return $false }; try { $h = ([uri]$u).Host.ToLower() } catch { return $false }; return ($h -eq ($base + ''.odoo.com'')) -or ($h -like ($base + ''-*.odoo.com'')) } | Select-Object -First 1; if ($match) { @{ ok = $true; url = $match.url } | ConvertTo-Json -Compress; exit 0 } else { @{ ok = $false; url = '''' } | ConvertTo-Json -Compress; exit 1 }"'
+          allow_fail: true
+          unsafe: true
+
+      - name: Reuse live Odoo instance URL from CDP targets
+        if: "${live_odoo_target.json.ok}"
+        action: Set
+        params:
+          name: ODOO_URL
+          value: "${live_odoo_target.json.url}"
+
+      - name: Persist live Odoo URL artifact
+        if: "${live_odoo_target.json.ok}"
+        action: FS.WriteText
+        params:
+          path: "${OUTPUT_DIR}\\odoo_instance_url.txt"
+          text: "${live_odoo_target.json.url}"
+          overwrite: true
+
+  - name: Check existing Odoo URL artifact
+    if_not: "${FORCE_NEW_ODOO_TRIAL}"
+    action: FS.Exists
+    register: has_odoo_url_artifact
+    params:
+      path: "${OUTPUT_DIR}\\odoo_instance_url.txt"
+
+  - name: Read existing Odoo URL artifact
+    if_not: "${FORCE_NEW_ODOO_TRIAL}"
+    if: "${has_odoo_url_artifact}"
+    action: FS.ReadText
+    register: existing_odoo_url_artifact
+    params:
+      path: "${OUTPUT_DIR}\\odoo_instance_url.txt"
+
+  - name: Validate existing Odoo URL artifact against expected alias base
+    if_not: "${FORCE_NEW_ODOO_TRIAL}"
+    if: "${existing_odoo_url_artifact}"
+    action: Shell.RunJson
+    register: existing_odoo_url_validation
+    params:
+      command: 'powershell -NoProfile -Command "$u = ''${existing_odoo_url_artifact}''; $u = ($u | Out-String).Trim(); $base = (''${ODOO_INSTANCE_ALIAS_BASE}'' | Out-String).Trim().ToLower(); $ok = $false; $host = ''''; if ($u -ne '''') { try { $host = ([uri]$u).Host.ToLower(); $isOdoo = $host -like ''*.odoo.com'' -and $host -ne ''www.odoo.com''; $aliasOk = ($host -eq ($base + ''.odoo.com'')) -or ($host -like ($base + ''-*.odoo.com'')); $ok = $isOdoo -and $aliasOk } catch { $ok = $false } }; @{ ok = $ok; url = $u; host = $host; expected_base = $base } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
+      allow_fail: true
+      unsafe: true
+
+  - name: Reuse ODOO_URL from validated artifact
+    if_not: "${FORCE_NEW_ODOO_TRIAL}"
+    if: "${existing_odoo_url_validation.json.ok}"
+    action: Set
+    params:
+      name: ODOO_URL
+      value: "${existing_odoo_url_validation.json.url}"
+
+  - name: Handle invalid existing Odoo URL artifact
+    if_not: "${FORCE_NEW_ODOO_TRIAL}"
+    if: "${existing_odoo_url_artifact}"
+    steps:
+      - name: Persist invalid existing Odoo URL artifact diagnostics
+        if_not: "${existing_odoo_url_validation.json.ok}"
+        action: FS.WriteJson
+        params:
+          path: "${OUTPUT_DIR}\\odoo_instance_url_error.json"
+          overwrite: true
+          value:
+            ok: false
+            error: "Existing ODOO URL artifact did not match expected alias base; forcing new trial creation."
+            detected_url: "${existing_odoo_url_validation.json.url}"
+            detected_host: "${existing_odoo_url_validation.json.host}"
+            expected_alias_base: "${existing_odoo_url_validation.json.expected_base}"
+
+      - name: Delete invalid Odoo URL artifact before new trial creation
+        if_not: "${existing_odoo_url_validation.json.ok}"
+        action: FS.Delete
+        params:
+          path: "${OUTPUT_DIR}\\odoo_instance_url.txt"
+
+  - name: Create Odoo Enterprise instance (autonomous)
+    if_not: "${ODOO_URL}"
+    playbook: "../../odoo/trial/create/playbook.yml"
+
+  - name: Check eCommerce checkpoint
+    action: FS.Exists
+    register: has_ecommerce_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_ecommerce_install_checkpoint.json"
+
+  - name: Install eCommerce module (interactive)
+    if_not: "${has_ecommerce_checkpoint}"
+    playbook: "../../odoo/apps/install_ecommerce/playbook.yml"
+
+  - name: Check operations core checkpoint
+    action: FS.Exists
+    register: has_ops_core_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_operations_core_checkpoint.json"
+
+  - name: Install core operations modules (interactive)
+    if_not: "${has_ops_core_checkpoint}"
+    playbook: "../../odoo/apps/install_operations_core/playbook.yml"
+
+  - name: Check branding checkpoint
+    action: FS.Exists
+    register: has_branding_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_branding_checkpoint.json"
+
+  - name: Apply basic branding (interactive)
+    if_not: "${has_branding_checkpoint}"
+    playbook: "../../odoo/config/branding/playbook.yml"
+
+  - name: Check dropshipping checkpoint
+    action: FS.Exists
+    register: has_dropship_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_dropshipping_ops_checkpoint.json"
+
+  - name: Configure dropshipping operations (interactive)
+    if_not: "${has_dropship_checkpoint}"
+    playbook: "../../odoo/config/dropshipping_ops/playbook.yml"
+
+  - name: Check wholesaler scaffold checkpoint
+    action: FS.Exists
+    register: has_wholesaler_scaffold
+    params:
+      path: "${OUTPUT_DIR}\\wholesaler_integration_scaffold_checkpoint.json"
+
+  - name: Scaffold wholesaler integration assets
+    if_not: "${has_wholesaler_scaffold}"
+    playbook: "../../integration/wholesalers/scaffold/playbook.yml"
+
+  - name: Track framework growth: Electroprice dropshipping baseline
+    action: Framework.TrackGrowth
+    params:
+      project_dir: "${PROJECT_DIR}"
+      category: "ecommerce"
+      note: "Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold."

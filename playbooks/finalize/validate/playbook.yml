@@ -1,0 +1,145 @@
+steps:
+  - name: Validate repo sync artifact
+    action: FS.Exists
+    register: has_repo_sync
+    params:
+      path: "${OUTPUT_DIR}\\electroprice_repo.sync.json"
+
+  - name: Validate Odoo URL artifact
+    action: FS.Exists
+    register: has_odoo_url
+    params:
+      path: "${OUTPUT_DIR}\\odoo_instance_url.txt"
+
+  - name: Read Odoo URL artifact content
+    if: "${has_odoo_url}"
+    action: FS.ReadText
+    register: odoo_url_value
+    params:
+      path: "${OUTPUT_DIR}\\odoo_instance_url.txt"
+
+  - name: Validate Odoo URL content (must be provisioned instance)
+    if: "${has_odoo_url}"
+    action: Shell.RunJson
+    register: odoo_url_content_check
+    params:
+      command: 'powershell -NoProfile -Command "$u = Get-Content -Raw -Path ''${OUTPUT_DIR}\\odoo_instance_url.txt''; $u = ($u | Out-String).Trim(); $ok = ($u -match ''\.odoo\.com'' -and $u -notmatch ''/trial'' -and $u -notmatch ''://www\.odoo\.com''); @{ ok = $ok; url = $u } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
+      allow_fail: true
+      unsafe: true
+
+  - name: Validate Odoo URL alias base (must belong to electroprice namespace)
+    if: "${has_odoo_url}"
+    action: Shell.RunJson
+    register: odoo_url_alias_check
+    params:
+      command: 'powershell -NoProfile -Command "$u = Get-Content -Raw -Path ''${OUTPUT_DIR}\\odoo_instance_url.txt''; $u = ($u | Out-String).Trim(); $base = (''${ODOO_INSTANCE_ALIAS_BASE}'' | Out-String).Trim().ToLower(); $ok = $false; $host = ''''; $sub = ''''; if ($u -ne '''') { try { $host = ([uri]$u).Host.ToLower(); if ($host -like ''*.odoo.com'' -and $host -ne ''www.odoo.com'') { $sub = $host -replace ''\.odoo\.com$'', ''''; $ok = ($sub -eq $base) -or ($sub -like ($base + ''-*'')) } } catch { $ok = $false } }; @{ ok = $ok; url = $u; host = $host; subdomain = $sub; expected_base = $base } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
+      allow_fail: true
+      unsafe: true
+
+  - name: Validate eCommerce checkpoint artifact
+    action: FS.Exists
+    register: has_ecommerce_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_ecommerce_install_checkpoint.json"
+
+  - name: Validate operations core checkpoint artifact
+    action: FS.Exists
+    register: has_ops_core_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_operations_core_checkpoint.json"
+
+  - name: Validate dropshipping ops checkpoint artifact
+    action: FS.Exists
+    register: has_dropship_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_dropshipping_ops_checkpoint.json"
+
+  - name: Validate branding checkpoint artifact
+    action: FS.Exists
+    register: has_branding_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_branding_checkpoint.json"
+
+  - name: Validate wholesaler scaffold checkpoint artifact
+    action: FS.Exists
+    register: has_wholesaler_scaffold
+    params:
+      path: "${OUTPUT_DIR}\\wholesaler_integration_scaffold_checkpoint.json"
+
+  - name: Build readiness report
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\readiness_report.json"
+      overwrite: true
+      value:
+        ok: true
+        checks:
+          repo_sync: "${has_repo_sync}"
+          odoo_url: "${has_odoo_url}"
+          odoo_url_value: "${odoo_url_value}"
+          odoo_url_content_exit_code: "${odoo_url_content_check.exit_code}"
+          odoo_url_content_ok: "${odoo_url_content_check.json.ok}"
+          odoo_url_content_url: "${odoo_url_content_check.json.url}"
+          odoo_url_alias_exit_code: "${odoo_url_alias_check.exit_code}"
+          odoo_url_alias_ok: "${odoo_url_alias_check.json.ok}"
+          odoo_url_alias_subdomain: "${odoo_url_alias_check.json.subdomain}"
+          odoo_url_alias_expected_base: "${odoo_url_alias_check.json.expected_base}"
+          ecommerce_checkpoint: "${has_ecommerce_checkpoint}"
+          operations_core_checkpoint: "${has_ops_core_checkpoint}"
+          dropshipping_ops_checkpoint: "${has_dropship_checkpoint}"
+          branding_checkpoint: "${has_branding_checkpoint}"
+          wholesaler_scaffold_checkpoint: "${has_wholesaler_scaffold}"
+
+  - name: Abort if repo sync artifact is missing
+    if_not: "${has_repo_sync}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if Odoo URL artifact is missing
+    if_not: "${has_odoo_url}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if Odoo URL content is invalid
+    if: "${odoo_url_content_check.exit_code}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if Odoo URL alias base is invalid
+    if: "${odoo_url_alias_check.exit_code}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if eCommerce checkpoint is missing
+    if_not: "${has_ecommerce_checkpoint}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if operations core checkpoint is missing
+    if_not: "${has_ops_core_checkpoint}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if dropshipping checkpoint is missing
+    if_not: "${has_dropship_checkpoint}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if branding checkpoint is missing
+    if_not: "${has_branding_checkpoint}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if wholesaler scaffold checkpoint is missing
+    if_not: "${has_wholesaler_scaffold}"
+    action: Shell.Run
+    params:
+      command: "exit 1"

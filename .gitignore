@@ -1,0 +1,12 @@
+# Outputs / evidence
+playbooks/output/
+
+# Local logs/state
+waiba_cli.log
+waiba_last.json
+playbooks/**/waiba_cli.log
+
+# Secrets
+secrets.yml
+.secrets.yml
+

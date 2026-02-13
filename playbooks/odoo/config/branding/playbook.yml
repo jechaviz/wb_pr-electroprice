@@ -1,0 +1,62 @@
+steps:
+  - name: Ensure we have an Odoo URL in context
+    if_not: "${ODOO_URL}"
+    action: Note
+    params:
+      text: |
+        Falta ODOO_URL en el contexto.
+        Corre primero el subplaybook de creacion de instancia.
+
+  - name: Abort because ODOO_URL is missing
+    if_not: "${ODOO_URL}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Connect to Odoo tab (CDP)
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_URL}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Autonomous mode: continue without manual prompt
+    if: "${AUTONOMOUS_MODE}"
+    action: Set
+    params:
+      name: branding_done
+      value:
+        confirmed: true
+        mode: "autonomous"
+
+  - name: Interactive fallback: apply basic Electroprice branding
+    if_not: "${AUTONOMOUS_MODE}"
+    action: Framework.Prompt
+    register: branding_done
+    params:
+      title: "Electroprice / Odoo Setup"
+      icon: info
+      buttons: ok
+      text: |
+        Configura branding basico en Odoo:
+        - Company name: Electroprice
+        - Website name/logo
+        - Configura currency y pais si aplica
+
+        Cuando termines, presiona OK para continuar.
+
+  - name: Abort if branding was not completed
+    if_not: "${branding_done.confirmed}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Persist branding checkpoint
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_branding_checkpoint.json"
+      value:
+        ok: true
+        odoo_url: "${ODOO_URL}"
+      overwrite: true

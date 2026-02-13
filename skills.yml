@@ -1,0 +1,15 @@
+﻿imports: 
+  actions: []
+  buckets: 
+    - ecommerce
+    - core
+  skills: []
+policy: 
+  reusable_code_in_project: 0
+  reusable_code_location: %USERPROFILE%\\.waiba\\skills
+project: 
+  category: ecommerce
+  name: Electroprice
+  skill_path: Electroprice
+  subcategory: dropshipping
+version: 1

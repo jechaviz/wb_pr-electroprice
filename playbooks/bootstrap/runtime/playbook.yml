@@ -1,0 +1,5 @@
+﻿steps:
+  - name: Ensure output directory exists
+    action: FS.EnsureDir
+    params:
+      path: "${OUTPUT_DIR}"

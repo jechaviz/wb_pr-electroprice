@@ -1,0 +1,25 @@
+﻿{
+"version": "v1",
+"suppliers": [
+{
+"supplier_code": "SUPPLIER_001",
+"supplier_name": "Placeholder Supplier",
+"active": false,
+"auth": {
+"type": "api_key",
+"env_key": "SUPPLIER_001_API_KEY"
+},
+"endpoints": {
+"catalog": "https://api.example.com/catalog",
+"price_stock": "https://api.example.com/price-stock",
+"order_create": "https://api.example.com/orders",
+"order_status": "https://api.example.com/orders/{supplier_order_id}"
+},
+"polling": {
+"catalog_minutes": 120,
+"price_stock_minutes": 15,
+"order_status_minutes": 10
+}
+}
+]
+}

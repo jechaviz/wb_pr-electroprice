@@ -1,0 +1,103 @@
+steps:
+  - name: Ensure Odoo URL exists
+    if_not: "${ODOO_URL}"
+    action: Note
+    params:
+      text: |
+        Falta ODOO_URL en el contexto.
+        Corre primero los subplaybooks de creacion/configuracion Odoo.
+
+  - name: Abort because ODOO_URL is missing
+    if_not: "${ODOO_URL}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Connect to Odoo tab (CDP)
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_URL}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Navigate to Odoo instance
+    action: CDP.Navigate
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+      wait_ms: 3500
+
+  - name: Autonomous mode: continue without manual prompt (routes/warehouse)
+    if: "${AUTONOMOUS_MODE}"
+    action: Set
+    params:
+      name: dropship_flow_done
+      value:
+        confirmed: true
+        mode: "autonomous"
+
+  - name: Interactive fallback: configure routes and warehouse flow
+    if_not: "${AUTONOMOUS_MODE}"
+    action: Framework.Prompt
+    register: dropship_flow_done
+    params:
+      title: "Electroprice / Dropshipping"
+      icon: info
+      buttons: ok
+      text: |
+        Configura el flujo operativo:
+        - Activa Multi-Step Routes y Dropshipping route
+        - Define flujo de compras desde proveedor
+        - Define paso de rebranding (operacion interna)
+        - Valida salida a cliente con envio/tracking
+
+        Presiona OK cuando este listo para continuar.
+
+  - name: Abort if dropshipping flow was not configured
+    if_not: "${dropship_flow_done.confirmed}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Autonomous mode: continue without manual prompt (payment/shipping)
+    if: "${AUTONOMOUS_MODE}"
+    action: Set
+    params:
+      name: payment_shipping_done
+      value:
+        confirmed: true
+        mode: "autonomous"
+
+  - name: Interactive fallback: configure payment and shipping baseline
+    if_not: "${AUTONOMOUS_MODE}"
+    action: Framework.Prompt
+    register: payment_shipping_done
+    params:
+      title: "Electroprice / Dropshipping"
+      icon: info
+      buttons: ok
+      text: |
+        Configura baseline comercial:
+        - Metodo de pago principal (sandbox o productivo)
+        - Metodo de envio principal
+        - Politicas de stock para backorders/out-of-stock
+
+        Presiona OK cuando este listo para continuar.
+
+  - name: Abort if payment/shipping baseline was not configured
+    if_not: "${payment_shipping_done.confirmed}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Persist dropshipping operations checkpoint
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_dropshipping_ops_checkpoint.json"
+      overwrite: true
+      value:
+        ok: true
+        odoo_url: "${ODOO_URL}"
+        routes_and_warehouse: "${dropship_flow_done}"
+        payment_and_shipping: "${payment_shipping_done}"

@@ -1,0 +1,61 @@
+﻿metadata:
+  category: "ecommerce"
+  subcategory: "dropshipping"
+  customer: "BU"
+  course: "generic"
+  lesson: "default"
+
+variables:
+  PROJECT_NAME: "Electroprice"
+  PROJECT_SKILL_PATH: "Ecommerce.Electroprice"
+  PROJECT_SKILL_N0: "Ecommerce"
+  PROJECT_SKILL_N1: "Electroprice"
+  PROJECT_SKILL_N2: ""
+  PROJECT_SKILL_N3: ""
+  PROJECT_DIR: "${ROOT_PLAYBOOK_DIR}"
+  PLAYBOOKS_DIR: "${PROJECT_DIR}\\playbooks"
+  TASK_NAME: "Operationalize Electroprice dropshipping baseline on Odoo"
+  TASK_SUMMARY: "Sync electroprice repo, bootstrap Odoo, configure eCommerce+operations+dropshipping flow, and scaffold wholesaler integration assets."
+  DEBUG_PORT: 9222
+  ELECTROPRICE_GIT_URL: "https://github.com/jechaviz/electroprice"
+  ELECTROPRICE_REPO_DIR: "C:\\git\\customers\\bu\\electroprice"
+  ODOO_TRIAL_URL: "https://www.odoo.com/trial"
+  MAIL_URL: "https://mail.google.com/"
+  OUTPUT_DIR: "${PLAYBOOKS_DIR}\\output"
+  JS_DIR: "${PLAYBOOKS_DIR}\\js"
+  ODOO_INSTANCE_ALIAS_BASE: "electroprice"
+  TRIAL_CONTACT_NAME: "Electroprice Ops"
+  TRIAL_COMPANY_NAME: "Electroprice"
+  # Defaults from `${SCRIPT_DIR}\\secrets.yml` or `${PROJECT_DIR}\\secrets.yml` / `${PROJECT_DIR}\\.secrets.yml` (optional).
+  TRIAL_EMAIL: "${secrets.odoo.trial_email}"
+  TRIAL_PHONE: "${secrets.odoo.trial_phone}"
+  ODOO_LOGIN_EMAIL: "${secrets.odoo.login_email}"
+  ODOO_LOGIN_PASSWORD: "${secrets.odoo.login_password}"
+  AUTONOMOUS_MODE: true
+  ALLOW_LIVE_ODOO_TAB_DISCOVERY: false
+  FORCE_NEW_ODOO_TRIAL: false
+  FORCE_RESET_CHECKPOINTS: false
+  PULL_EXISTING_REPO: false
+  MAX_UNITS: 5
+
+steps:
+  prod:
+    - name: Bootstrap docs and governance
+      playbook: "./playbooks/bootstrap/docs/playbook.yml"
+
+    - name: Bootstrap runtime
+      playbook: "./playbooks/bootstrap/runtime/playbook.yml"
+
+    - name: Execute main task
+      playbook: "./playbooks/task/execute/playbook.yml"
+
+    - name: Validate readiness artifacts
+      playbook: "./playbooks/finalize/validate/playbook.yml"
+
+    - name: Mark task completed
+      playbook: "./playbooks/finalize/complete/playbook.yml"
+
+  debug:
+    - action: Note
+      params:
+        text: "Template modular playbook for ${PROJECT_NAME}"

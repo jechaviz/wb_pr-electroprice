@@ -1,0 +1,132 @@
+steps:
+  - name: Ensure integration assets directory
+    action: FS.EnsureDir
+    register: wholesalers_assets_dir
+    params:
+      path: "${PROJECT_DIR}\\playbooks\\integration\\wholesalers\\assets"
+
+  - name: Write wholesaler registry template
+    action: FS.WriteText
+    params:
+      path: "${wholesalers_assets_dir}\\supplier_registry.template.json"
+      overwrite: true
+      text: |
+        {
+          "version": "v1",
+          "suppliers": [
+            {
+              "supplier_code": "SUPPLIER_001",
+              "supplier_name": "Placeholder Supplier",
+              "active": false,
+              "auth": {
+                "type": "api_key",
+                "env_key": "SUPPLIER_001_API_KEY"
+              },
+              "endpoints": {
+                "catalog": "https://api.example.com/catalog",
+                "price_stock": "https://api.example.com/price-stock",
+                "order_create": "https://api.example.com/orders",
+                "order_status": "https://api.example.com/orders/{supplier_order_id}"
+              },
+              "polling": {
+                "catalog_minutes": 120,
+                "price_stock_minutes": 15,
+                "order_status_minutes": 10
+              }
+            }
+          ]
+        }
+
+  - name: Write SKU mapping template
+    action: FS.WriteText
+    params:
+      path: "${wholesalers_assets_dir}\\sku_mapping.template.json"
+      overwrite: true
+      text: |
+        {
+          "version": "v1",
+          "mappings": [
+            {
+              "supplier_code": "SUPPLIER_001",
+              "supplier_sku": "ABC-001",
+              "internal_sku": "ELECTRO-ABC-001",
+              "odoo_product_default_code": "ELECTRO-ABC-001",
+              "margin_rules": {
+                "mode": "percentage",
+                "value": 18
+              },
+              "status": "draft"
+            }
+          ]
+        }
+
+  - name: Write connector contract baseline
+    action: FS.WriteText
+    params:
+      path: "${wholesalers_assets_dir}\\connector_contract.v1.json"
+      overwrite: true
+      text: |
+        {
+          "ingest": {
+            "pull_catalog": {
+              "required_fields": ["supplier_sku", "name", "brand", "cost", "currency", "available_qty"]
+            },
+            "pull_price_stock": {
+              "required_fields": ["supplier_sku", "cost", "available_qty", "updated_at"]
+            }
+          },
+          "ordering": {
+            "create_supplier_order": {
+              "required_fields": ["supplier_sku", "qty", "ship_to", "customer_ref", "internal_order_ref"]
+            },
+            "fetch_supplier_order_status": {
+              "required_fields": ["supplier_order_id"]
+            }
+          },
+          "tracking": {
+            "required_fields": ["supplier_order_id", "tracking_number", "carrier", "status", "updated_at"]
+          }
+        }
+
+  - name: Write onboarding runbook
+    action: FS.WriteText
+    params:
+      path: "${wholesalers_assets_dir}\\supplier_onboarding.md"
+      overwrite: true
+      text: |
+        # Supplier Onboarding (Electroprice)
+
+        ## Goal
+        Add a wholesaler with reliable catalog sync and API order execution.
+
+        ## Steps
+        1. Fill `supplier_registry.template.json` for new supplier.
+        2. Create supplier credentials in secrets store (no plain-text keys in git).
+        3. Fill `sku_mapping.template.json` for initial product set.
+        4. Validate connector contract against `connector_contract.v1.json`.
+        5. Run sandbox order flow:
+           - customer order -> supplier order -> tracking update -> customer shipment.
+        6. Promote supplier status from `draft` to `active` only after test success.
+
+  - name: Persist integration scaffold checkpoint
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\wholesaler_integration_scaffold_checkpoint.json"
+      overwrite: true
+      value:
+        ok: true
+        assets_dir: "${wholesalers_assets_dir}"
+        files:
+          - "${wholesalers_assets_dir}\\supplier_registry.template.json"
+          - "${wholesalers_assets_dir}\\sku_mapping.template.json"
+          - "${wholesalers_assets_dir}\\connector_contract.v1.json"
+          - "${wholesalers_assets_dir}\\supplier_onboarding.md"
+
+  - name: Track framework growth: wholesaler connector scaffold
+    action: Framework.TrackGrowth
+    params:
+      project_dir: "${PROJECT_DIR}"
+      category: "ecommerce"
+      new_skill: "Ecommerce.WholesalerConnector"
+      spec_extension: "connector_contract_v1"
+      note: "Wholesaler integration scaffold and contracts added to project assets."

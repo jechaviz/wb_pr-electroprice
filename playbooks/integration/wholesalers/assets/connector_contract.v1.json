@@ -1,0 +1,21 @@
+﻿{
+"ingest": {
+"pull_catalog": {
+"required_fields": ["supplier_sku", "name", "brand", "cost", "currency", "available_qty"]
+},
+"pull_price_stock": {
+"required_fields": ["supplier_sku", "cost", "available_qty", "updated_at"]
+}
+},
+"ordering": {
+"create_supplier_order": {
+"required_fields": ["supplier_sku", "qty", "ship_to", "customer_ref", "internal_order_ref"]
+},
+"fetch_supplier_order_status": {
+"required_fields": ["supplier_order_id"]
+}
+},
+"tracking": {
+"required_fields": ["supplier_order_id", "tracking_number", "carrier", "status", "updated_at"]
+}
+}

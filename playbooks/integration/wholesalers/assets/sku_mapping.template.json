@@ -1,0 +1,16 @@
+﻿{
+"version": "v1",
+"mappings": [
+{
+"supplier_code": "SUPPLIER_001",
+"supplier_sku": "ABC-001",
+"internal_sku": "ELECTRO-ABC-001",
+"odoo_product_default_code": "ELECTRO-ABC-001",
+"margin_rules": {
+"mode": "percentage",
+"value": 18
+},
+"status": "draft"
+}
+]
+}

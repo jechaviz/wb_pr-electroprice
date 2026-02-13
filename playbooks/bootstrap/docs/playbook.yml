@@ -1,0 +1,23 @@
+﻿steps:
+  - name: Ensure project docs exist
+    action: Framework.EnsureProjectDocs
+    params:
+      project_dir: "${PROJECT_DIR}"
+      project_name: "${PROJECT_NAME}"
+      category: "ecommerce"
+      subcategory: "dropshipping"
+      customer: "BU"
+      course: "generic"
+      lesson: "default"
+      task_name: "${TASK_NAME}"
+      task_summary: "${TASK_SUMMARY}"
+      course_url: "${COURSE_URL}"
+      debug_port: "${DEBUG_PORT}"
+      max_units: "${MAX_UNITS}"
+
+  - name: Track framework growth baseline
+    action: Framework.TrackGrowth
+    params:
+      project_dir: "${PROJECT_DIR}"
+      category: "ecommerce"
+      note: "Project initialized from modular framework template"

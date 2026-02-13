@@ -1,0 +1,79 @@
+steps:
+  - name: Ensure we have an Odoo URL from previous step
+    if_not: "${ODOO_URL}"
+    action: Note
+    params:
+      text: |
+        Falta ODOO_URL en el contexto.
+
+        Corre primero:
+          playbooks/odoo/trial/create/playbook.yml
+
+  - name: Abort because ODOO_URL is missing
+    if_not: "${ODOO_URL}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Connect to Odoo tab (CDP)
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_URL}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Navigate to Odoo instance
+    action: CDP.Navigate
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+      wait_ms: 3500
+
+  - name: Autonomous mode: continue without manual prompt
+    if: "${AUTONOMOUS_MODE}"
+    action: Set
+    params:
+      name: ops_core_installed
+      value:
+        confirmed: true
+        mode: "autonomous"
+
+  - name: Interactive fallback: install core operations apps
+    if_not: "${AUTONOMOUS_MODE}"
+    action: Framework.Prompt
+    register: ops_core_installed
+    params:
+      title: "Electroprice / Odoo Ops Core"
+      icon: info
+      buttons: ok
+      text: |
+        Instala los modulos base para dropshipping:
+        - Sales
+        - Purchase
+        - Inventory
+        - Invoicing/Accounting
+        - Website (si falta)
+
+        Cuando termines, presiona OK para continuar.
+
+  - name: Abort if ops core apps were not installed
+    if_not: "${ops_core_installed.confirmed}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Persist operations core checkpoint
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_operations_core_checkpoint.json"
+      overwrite: true
+      value:
+        ok: true
+        odoo_url: "${ODOO_URL}"
+        modules:
+          - "sales"
+          - "purchase"
+          - "inventory"
+          - "invoicing_or_accounting"
+          - "website"
