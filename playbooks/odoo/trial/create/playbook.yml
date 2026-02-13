@@ -150,6 +150,10 @@ steps:
     register: odoo_url_meta_pre
     params:
       port: "${DEBUG_PORT}"
+      main_domain: "odoo.com"
+      reserved_subdomains:
+        - "www"
+      exclude_url_regex: "i)/trial"
       expected_base: "${ODOO_INSTANCE_ALIAS_BASE}"
 
   - name: Skip auth/forms if instance already reached
@@ -377,6 +381,10 @@ steps:
     register: odoo_url_meta
     params:
       port: "${DEBUG_PORT}"
+      main_domain: "odoo.com"
+      reserved_subdomains:
+        - "www"
+      exclude_url_regex: "i)/trial"
       expected_base: "${ODOO_INSTANCE_ALIAS_BASE}"
 
   - name: Abort if not on provisioned Odoo instance
