@@ -12,7 +12,7 @@ steps:
     params:
       port: "${DEBUG_PORT}"
       host_endswith: "odoo.com"
-      url_regex: "i)odoo\\.com(/[^/]+)?/trial"
+      url_contains: "/trial"
       timeout_secs: 30
       interval_ms: 400
 
