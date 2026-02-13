@@ -36,6 +36,12 @@ variables:
   FORCE_NEW_ODOO_TRIAL: false
   FORCE_RESET_CHECKPOINTS: false
   PULL_EXISTING_REPO: false
+  # This WAIBA project repo (playbooks + docs). The product repo is ELECTROPRICE_GIT_URL.
+  PROJECT_REPO_OWNER: "jechaviz"
+  PROJECT_REPO_NAME: "wb_pr-electroprice"
+  PROJECT_REPO_URL: "https://github.com/${PROJECT_REPO_OWNER}/${PROJECT_REPO_NAME}"
+  PROJECT_REPO_GIT_URL: "${PROJECT_REPO_URL}.git"
+  PUBLISH_PROJECT_REPO: true
   MAX_UNITS: 5
 
 steps:
@@ -46,6 +52,10 @@ steps:
     - name: Bootstrap runtime
       playbook: "./playbooks/bootstrap/runtime/playbook.yml"
 
+    - name: Publish WAIBA project repo (first run)
+      if: "${PUBLISH_PROJECT_REPO}"
+      playbook: "./playbooks/bootstrap/publish_project_repo/playbook.yml"
+
     - name: Execute main task
       playbook: "./playbooks/task/execute/playbook.yml"
 
@@ -54,6 +64,40 @@ steps:
 
     - name: Mark task completed
       playbook: "./playbooks/finalize/complete/playbook.yml"
+
+  sync:
+    - action: Set
+      params:
+        name: DEBUG_EVIDENCE
+        value: true
+
+    - action: Set
+      params:
+        name: DEBUG_SCREENSHOTS
+        value: true
+
+    - name: Bootstrap runtime
+      playbook: "./playbooks/bootstrap/runtime/playbook.yml"
+
+    - name: Publish WAIBA project repo
+      playbook: "./playbooks/bootstrap/publish_project_repo/playbook.yml"
+
+  trial_only:
+    - action: Set
+      params:
+        name: DEBUG_EVIDENCE
+        value: true
+
+    - action: Set
+      params:
+        name: DEBUG_SCREENSHOTS
+        value: true
+
+    - name: Bootstrap runtime
+      playbook: "./playbooks/bootstrap/runtime/playbook.yml"
+
+    - name: Create Odoo Enterprise instance (autonomous)
+      playbook: "./playbooks/odoo/trial/create/playbook.yml"
 
   debug:
     - action: Note

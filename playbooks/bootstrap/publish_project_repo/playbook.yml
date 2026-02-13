@@ -1,0 +1,241 @@
+steps:
+  - name: Ensure git is available
+    action: Shell.Exists
+    register: git_exists
+    params:
+      name: git
+
+  - name: Abort because git is missing
+    if_not: "${git_exists}"
+    action: Fail
+    params:
+      text: "git is required to publish this WAIBA project repo."
+
+  - name: Ensure this project is a git repo
+    action: FS.Exists
+    register: has_dot_git
+    params:
+      path: "${PROJECT_DIR}\\.git"
+
+  - name: Abort because project_dir is not a git repo
+    if_not: "${has_dot_git}"
+    action: Fail
+    params:
+      text: "PROJECT_DIR is not a git repo: ${PROJECT_DIR}"
+
+  - name: Probe origin remote (best-effort)
+    action: Shell.Run
+    register: origin_get
+    params:
+      command: "git -C ${PROJECT_DIR} remote get-url origin"
+      allow_fail: true
+      timeout_ms: 15000
+
+  - name: Ensure origin remote exists (idempotent)
+    action: Shell.Run
+    params:
+      command: "git -C ${PROJECT_DIR} remote add origin ${PROJECT_REPO_GIT_URL}"
+      allow_fail: true
+      timeout_ms: 15000
+
+  - name: Ensure origin remote URL is correct (idempotent)
+    action: Shell.Run
+    params:
+      command: "git -C ${PROJECT_DIR} remote set-url origin ${PROJECT_REPO_GIT_URL}"
+      timeout_ms: 15000
+
+  - name: Check if remote repo exists (no prompts)
+    action: Shell.Run
+    register: remote_probe
+    params:
+      command: "set GIT_TERMINAL_PROMPT=0 && git -C ${PROJECT_DIR} ls-remote --heads origin main"
+      allow_fail: true
+      timeout_ms: 25000
+
+  - name: Create private GitHub repo via UI (only when missing)
+    if_not: "${remote_probe.stdout}"
+    steps:
+      - name: Open GitHub new repo page
+        action: Helium.StartEdge
+        params:
+          port: "${DEBUG_PORT}"
+          open_url: "https://github.com/new"
+          target_type: page
+          exclude_url_contains: "devtools://|edge://|chrome://"
+
+      - name: Wait for GitHub new repo page (or login)
+        action: Helium.WaitUntilUrl
+        register: github_new_meta
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          url_contains: "github.com/new"
+          timeout_secs: 6
+          interval_ms: 300
+
+      - name: Login to GitHub (best-effort, password manager)
+        if_not: "${github_new_meta.ok}"
+        steps:
+          - name: Wait for login page
+            action: Helium.WaitUntilUrl
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              url_contains: "github.com/login"
+              timeout_secs: 10
+              interval_ms: 300
+
+          - name: Focus login field
+            action: Helium.Click
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: s
+                selector: "input#login_field, input[name='login']"
+              implicit_wait_ms: 6000
+              retry_interval_ms: 200
+
+          - name: Password manager pick username (best-effort)
+            action: Helium.Press
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              key: "DOWN"
+
+          - name: Confirm username selection (best-effort)
+            action: Helium.Press
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              key: "ENTER"
+
+          - name: Focus password field
+            action: Helium.Click
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: s
+                selector: "input#password, input[name='password'], input[type='password']"
+              implicit_wait_ms: 6000
+              retry_interval_ms: 200
+
+          - name: Password manager pick password (best-effort)
+            action: Helium.Press
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              key: "DOWN"
+
+          - name: Confirm password selection (best-effort)
+            action: Helium.Press
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              key: "ENTER"
+
+          - name: Click Sign in (best-effort)
+            action: Helium.Click
+            register: github_signin_click
+            ignore_errors: true
+            confirm_after_wait_ms: 1200
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: button
+                text: "Sign in"
+              implicit_wait_ms: 6000
+              retry_interval_ms: 200
+
+          - name: Wait for GitHub new repo page after login
+            action: Helium.WaitUntilUrl
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              url_contains: "github.com/new"
+              timeout_secs: 15
+              interval_ms: 300
+
+      - name: Fill repository name
+        action: Helium.Write
+        confirm_after_wait_ms: 500
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${PROJECT_REPO_NAME}"
+          into:
+            kind: s
+            selector: "input#repository_name, input[name='repository[name]']"
+          implicit_wait_ms: 10000
+          retry_interval_ms: 200
+
+      - name: Select Private visibility
+        action: Helium.Click
+        confirm_after_wait_ms: 400
+        params:
+          port: "${DEBUG_PORT}"
+          element:
+            kind: s
+            selector: "input#repository_visibility_private"
+          implicit_wait_ms: 8000
+          retry_interval_ms: 200
+
+      - name: Click Create repository
+        loop:
+          - "Create repository"
+          - "Crear repositorio"
+        steps:
+          - name: Click create button: ${loop.item}
+            action: Helium.Click
+            register: create_repo_click
+            ignore_errors: true
+            confirm_after_wait_ms: 1600
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: button
+                text: "${loop.item}"
+              implicit_wait_ms: 12000
+              retry_interval_ms: 250
+          - break_if: "${create_repo_click.ok}"
+
+      - name: Abort if Create repository was not clicked
+        if_not: "${create_repo_click.ok}"
+        action: Fail
+        params:
+          text: |
+            Could not click the "Create repository" button on GitHub.
+
+            Evidence:
+            - ${OUTPUT_DIR}\\debug_evidence
+
+      - name: Wait for created repo page
+        action: Helium.WaitUntilUrl
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          url_contains: "github.com/${PROJECT_REPO_OWNER}/${PROJECT_REPO_NAME}"
+          timeout_secs: 20
+          interval_ms: 350
+
+  - name: Push local main branch to origin
+    action: Shell.Run
+    register: git_push
+    params:
+      command: "set GIT_TERMINAL_PROMPT=0 && git -C ${PROJECT_DIR} push -u origin main"
+      allow_fail: false
+      timeout_ms: 240000
+
+  - name: Persist publish artifact
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\project_repo.publish.json"
+      overwrite: true
+      value:
+        ok: true
+        repo_name: "${PROJECT_REPO_NAME}"
+        repo_url: "${PROJECT_REPO_URL}"
+        git_url: "${PROJECT_REPO_GIT_URL}"
+        push: "${git_push}"
+
