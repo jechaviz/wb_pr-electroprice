@@ -1,6 +1,6 @@
 steps:
   - name: Clone/Pull electroprice repo
-    playbook: "../../bootstrap/clone_repo/playbook.yml"
+    playbook: "../../01_bootstrap/03_clone_product_repo/playbook.yml"
 
   - name: Reset ODOO_URL context when forcing new trial
     if: "${FORCE_NEW_ODOO_TRIAL}"
@@ -142,10 +142,10 @@ steps:
 
   - name: Create Odoo Enterprise instance (autonomous)
     if_not: "${ODOO_URL}"
-    playbook: "../../odoo/trial/create/playbook.yml"
+    playbook: "../02_odoo/01_trial_create/playbook.yml"
 
   - name: Ensure authenticated Odoo session
-    playbook: "../../odoo/auth/ensure_session/playbook.yml"
+    playbook: "../02_odoo/02_auth_ensure_session/playbook.yml"
 
   - name: Check eCommerce checkpoint
     action: FS.Exists
@@ -155,7 +155,7 @@ steps:
 
   - name: Install eCommerce module (interactive)
     if_not: "${has_ecommerce_checkpoint}"
-    playbook: "../../odoo/apps/install_ecommerce/playbook.yml"
+    playbook: "../02_odoo/03_apps_install_ecommerce/playbook.yml"
 
   - name: Check operations core checkpoint
     action: FS.Exists
@@ -165,7 +165,7 @@ steps:
 
   - name: Install core operations modules (interactive)
     if_not: "${has_ops_core_checkpoint}"
-    playbook: "../../odoo/apps/install_operations_core/playbook.yml"
+    playbook: "../02_odoo/04_apps_install_operations_core/playbook.yml"
 
   - name: Check branding checkpoint
     action: FS.Exists
@@ -175,7 +175,7 @@ steps:
 
   - name: Apply basic branding (interactive)
     if_not: "${has_branding_checkpoint}"
-    playbook: "../../odoo/config/branding/playbook.yml"
+    playbook: "../02_odoo/05_config_branding/playbook.yml"
 
   - name: Check dropshipping checkpoint
     action: FS.Exists
@@ -185,7 +185,7 @@ steps:
 
   - name: Configure dropshipping operations (interactive)
     if_not: "${has_dropship_checkpoint}"
-    playbook: "../../odoo/config/dropshipping_ops/playbook.yml"
+    playbook: "../02_odoo/06_config_dropshipping_ops/playbook.yml"
 
   - name: Check wholesaler scaffold checkpoint
     action: FS.Exists
@@ -195,7 +195,7 @@ steps:
 
   - name: Scaffold wholesaler integration assets
     if_not: "${has_wholesaler_scaffold}"
-    playbook: "../../integration/wholesalers/scaffold/playbook.yml"
+    playbook: "../03_integration/01_wholesalers_scaffold/playbook.yml"
 
   - name: Track framework growth: Electroprice dropshipping baseline
     action: Framework.TrackGrowth

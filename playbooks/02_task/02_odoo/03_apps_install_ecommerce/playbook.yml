@@ -6,8 +6,8 @@ steps:
       text: |
         Falta ODOO_URL en el contexto.
 
-        Corre primero:
-          playbooks/odoo/trial/create/playbook.yml
+        Corre primero el subplaybook:
+          playbooks/02_task/02_odoo/01_trial_create/playbook.yml
 
   - name: Abort because ODOO_URL is missing
     if_not: "${ODOO_URL}"
@@ -28,52 +28,44 @@ steps:
     params:
       port: "${DEBUG_PORT}"
       url: "${ODOO_URL}"
-      wait_ms: 3500
+      wait_ms: 4000
 
   - name: Autonomous mode: continue without manual prompt
     if: "${AUTONOMOUS_MODE}"
     action: Set
     params:
-      name: ops_core_installed
+      name: ecommerce_installed
       value:
         confirmed: true
         mode: "autonomous"
 
-  - name: Interactive fallback: install core operations apps
+  - name: Interactive fallback: install eCommerce module
     if_not: "${AUTONOMOUS_MODE}"
     action: Framework.Prompt
-    register: ops_core_installed
+    register: ecommerce_installed
     params:
-      title: "Electroprice / Odoo Ops Core"
+      title: "Electroprice / Odoo Setup"
       icon: info
       buttons: ok
       text: |
-        Instala los modulos base para dropshipping:
-        - Sales
-        - Purchase
-        - Inventory
-        - Invoicing/Accounting
-        - Website (si falta)
+        Instala el modulo eCommerce en Odoo:
+        - Ve a Apps
+        - Busca "eCommerce"
+        - Instala
 
-        Cuando termines, presiona OK para continuar.
+        Cuando termine, presiona OK para continuar.
 
-  - name: Abort if ops core apps were not installed
-    if_not: "${ops_core_installed.confirmed}"
+  - name: Abort if eCommerce was not installed
+    if_not: "${ecommerce_installed.confirmed}"
     action: Shell.Run
     params:
       command: "exit 1"
 
-  - name: Persist operations core checkpoint
+  - name: Persist installation checkpoint
     action: FS.WriteJson
     params:
-      path: "${OUTPUT_DIR}\\odoo_operations_core_checkpoint.json"
-      overwrite: true
+      path: "${OUTPUT_DIR}\\odoo_ecommerce_install_checkpoint.json"
       value:
         ok: true
         odoo_url: "${ODOO_URL}"
-        modules:
-          - "sales"
-          - "purchase"
-          - "inventory"
-          - "invoicing_or_accounting"
-          - "website"
+      overwrite: true

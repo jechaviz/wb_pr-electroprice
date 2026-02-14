@@ -6,8 +6,8 @@ steps:
       text: |
         Falta ODOO_URL en el contexto.
 
-        Corre primero el subplaybook:
-          playbooks/odoo/trial/create/playbook.yml
+        Corre primero:
+          playbooks/02_task/02_odoo/01_trial_create/playbook.yml
 
   - name: Abort because ODOO_URL is missing
     if_not: "${ODOO_URL}"
@@ -28,44 +28,52 @@ steps:
     params:
       port: "${DEBUG_PORT}"
       url: "${ODOO_URL}"
-      wait_ms: 4000
+      wait_ms: 3500
 
   - name: Autonomous mode: continue without manual prompt
     if: "${AUTONOMOUS_MODE}"
     action: Set
     params:
-      name: ecommerce_installed
+      name: ops_core_installed
       value:
         confirmed: true
         mode: "autonomous"
 
-  - name: Interactive fallback: install eCommerce module
+  - name: Interactive fallback: install core operations apps
     if_not: "${AUTONOMOUS_MODE}"
     action: Framework.Prompt
-    register: ecommerce_installed
+    register: ops_core_installed
     params:
-      title: "Electroprice / Odoo Setup"
+      title: "Electroprice / Odoo Ops Core"
       icon: info
       buttons: ok
       text: |
-        Instala el modulo eCommerce en Odoo:
-        - Ve a Apps
-        - Busca "eCommerce"
-        - Instala
+        Instala los modulos base para dropshipping:
+        - Sales
+        - Purchase
+        - Inventory
+        - Invoicing/Accounting
+        - Website (si falta)
 
-        Cuando termine, presiona OK para continuar.
+        Cuando termines, presiona OK para continuar.
 
-  - name: Abort if eCommerce was not installed
-    if_not: "${ecommerce_installed.confirmed}"
+  - name: Abort if ops core apps were not installed
+    if_not: "${ops_core_installed.confirmed}"
     action: Shell.Run
     params:
       command: "exit 1"
 
-  - name: Persist installation checkpoint
+  - name: Persist operations core checkpoint
     action: FS.WriteJson
     params:
-      path: "${OUTPUT_DIR}\\odoo_ecommerce_install_checkpoint.json"
+      path: "${OUTPUT_DIR}\\odoo_operations_core_checkpoint.json"
+      overwrite: true
       value:
         ok: true
         odoo_url: "${ODOO_URL}"
-      overwrite: true
+        modules:
+          - "sales"
+          - "purchase"
+          - "inventory"
+          - "invoicing_or_accounting"
+          - "website"

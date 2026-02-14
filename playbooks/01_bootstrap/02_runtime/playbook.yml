@@ -1,0 +1,34 @@
+steps:
+  - name: Ensure output directory exists
+    action: FS.EnsureDir
+    params:
+      path: "${OUTPUT_DIR}"
+
+  - name: Apply WAIBA policy roots and global skill registry
+    action: Framework.Policy.Apply
+    register: waiba_policy
+    params:
+      category: "ecommerce"
+      subcategory: "dropshipping"
+      project_dir: "${PROJECT_DIR}"
+
+  - name: Import project skills from skills.yml
+    action: Framework.Policy.ImportSkills
+    register: waiba_skills_import
+    params:
+      project_dir: "${PROJECT_DIR}"
+      project_name: "${PROJECT_NAME}"
+      category: "ecommerce"
+      subcategory: "dropshipping"
+      project_skill_path: "${PROJECT_SKILL_PATH}"
+
+  - name: Enforce autonomy policy contract
+    action: Framework.Policy.EnsureAutonomy
+    register: waiba_autonomy_policy
+    params:
+      project_dir: "${PROJECT_DIR}"
+      project_name: "${PROJECT_NAME}"
+      category: "ecommerce"
+      subcategory: "dropshipping"
+      task_name: "${TASK_NAME}"
+      task_summary: "${TASK_SUMMARY}"

@@ -1,0 +1,13 @@
+﻿steps:
+  - name: Mark task completed
+    action: Framework.MarkTaskCompleted
+    params:
+      project_dir: "${PROJECT_DIR}"
+      task_name: "${TASK_NAME}"
+      summary: "${TASK_SUMMARY}"
+      artifacts:
+        - "${ROOT_PLAYBOOK_PATH}"
+        - "${PROJECT_DIR}\\playbooks"
+        - "${OUTPUT_DIR}"
+        - "${PROJECT_DIR}\\PRD.md"
+        - "${PROJECT_DIR}\\SDD.md"

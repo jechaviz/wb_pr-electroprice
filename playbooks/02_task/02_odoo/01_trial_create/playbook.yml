@@ -1,0 +1,313 @@
+﻿steps:
+  - name: Start Edge and open Odoo trial
+    action: Helium.StartEdge
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_TRIAL_URL}"
+      minimize_window: true
+      kill_existing: false
+      target_type: page
+      target_url_contains: "odoo.com"
+      exclude_url_contains: "devtools://|edge://|chrome://"
+
+  - name: Wait for Odoo trial page
+    action: Helium.WaitUntilUrl
+    params:
+      port: "${DEBUG_PORT}"
+      host_endswith: "odoo.com"
+      url_contains: "/trial"
+      timeout_secs: 30
+      interval_ms: 400
+
+  - name: Dismiss cookie/consent banner (best-effort)
+    confirm_progress: false
+    loop:
+      - "Accept"
+      - "Aceptar"
+      - "I agree"
+      - "Allow"
+      - "OK"
+    steps:
+      - name: Click consent button: ${loop.item}
+        action: Helium.Click
+        register: consent_click
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${loop.item}"
+          implicit_wait_ms: 800
+          retry_interval_ms: 150
+      - break_if: "${consent_click.ok}"
+
+  - name: Select app tile (eCommerce) deterministically
+    action: Helium.Click
+    register: app_click
+    ignore_errors: true
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "label[for='app_website_sale']"
+      implicit_wait_ms: 6000
+      retry_interval_ms: 150
+
+  - name: Verify eCommerce app selected
+    if: "${app_click.ok}"
+    action: Helium.Exists
+    register: app_selected_state
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "input#app_website_sale:checked"
+        visible: false
+
+  - name: Fallback app selection by localized text
+    if_not: "${app_selected_state.exists}"
+    loop:
+      - "Comercio electronico"
+      - "Comercio electrónico"
+      - "eCommerce"
+      - "Ecommerce"
+      - "Website"
+      - "Sitio web"
+      - "Shop"
+      - "Tienda"
+    steps:
+      - name: Find app tile in-page (Ctrl+F style): ${loop.item}
+        action: Helium.FindInPage
+        register: app_find
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${loop.item}"
+          highlight_ms: 900
+          retry_interval_ms: 0
+
+      - name: Click app tile via selection point: ${loop.item}
+        if: "${app_find.found}"
+        action: Helium.ClickNative
+        register: app_click
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element: "${app_find.point}"
+          implicit_wait_ms: 1500
+          retry_interval_ms: 150
+
+      - name: Fallback click app tile by DOM search: ${loop.item}
+        if_not: "${app_click.ok}"
+        action: Helium.Click
+        register: app_click
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${loop.item}"
+          implicit_wait_ms: 1200
+          retry_interval_ms: 200
+
+      - name: Verify app selection after fallback click
+        if: "${app_click.ok}"
+        action: Helium.Exists
+        register: app_selected_state
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element:
+            kind: s
+            selector: "input#app_website_sale:checked"
+            visible: false
+      - break_if: "${app_selected_state.exists}"
+
+  - name: Abort if eCommerce app tile was not selected
+    if_not: "${app_selected_state.exists}"
+    action: Fail
+    params:
+      text: |
+        Could not select the eCommerce app tile on the Odoo trial page.
+
+        Try running with env=debug to capture evidence, or check:
+        - ${OUTPUT_DIR}\\debug_evidence
+
+  - name: Detect visible Continue button
+    action: Helium.Exists
+    register: continue_button_state
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "button.openerp_enterprise_validate_trial"
+
+  - name: Click Continue (deterministic selector)
+    if: "${continue_button_state.exists}"
+    action: Helium.Click
+    register: continue_click
+    ignore_errors: true
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "button.openerp_enterprise_validate_trial"
+      implicit_wait_ms: 3000
+      retry_interval_ms: 150
+
+  - name: Fallback Continue click by localized text
+    if_not: "${continue_click.ok}"
+    loop:
+      - "Continue"
+      - "Continuar"
+      - "Next"
+    steps:
+      - name: Click continue button by button locator: ${loop.item}
+        action: Helium.Click
+        register: continue_click
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element:
+            kind: button
+            text: "${loop.item}"
+          implicit_wait_ms: 1500
+          retry_interval_ms: 150
+
+      - name: Find continue in-page (Ctrl+F style): ${loop.item}
+        if_not: "${continue_click.ok}"
+        action: Helium.FindInPage
+        register: continue_find
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${loop.item}"
+          highlight_ms: 900
+          retry_interval_ms: 0
+
+      - name: Click continue via selection point: ${loop.item}
+        if: "${continue_find.found}"
+        action: Helium.ClickNative
+        register: continue_click
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element: "${continue_find.point}"
+          implicit_wait_ms: 1500
+          retry_interval_ms: 150
+      - break_if: "${continue_click.ok}"
+
+  - name: Abort if Continue button could not be clicked
+    if_not: "${continue_click.ok}"
+    action: Fail
+    params:
+      text: |
+        Could not click Continue after selecting eCommerce app.
+
+        Evidence:
+        - ${OUTPUT_DIR}\\debug_evidence
+
+  - name: Confirm trial step moved to auth/form
+    action: Helium.WaitUntil
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_secs: 20
+      interval_ms: 250
+      exists:
+        kind: s
+        selector: "input#email, input[id*='email' i], input[type='email'], input[name='login'], input[autocomplete='username'], input[type='password']"
+  - name: Check if we are on an Odoo instance already
+    action: Helium.GetUrlMeta
+    register: odoo_url_meta_pre
+    params:
+      port: "${DEBUG_PORT}"
+      main_domain: "odoo.com"
+      reserved_subdomains:
+        - "www"
+      exclude_url_regex: "i)/trial"
+      expected_base: "${ODOO_INSTANCE_ALIAS_BASE}"
+
+  - name: Skip auth/forms if instance already reached
+    if: "${odoo_url_meta_pre.is_instance}"
+    action: Set
+    params:
+      name: created_instance
+      value:
+        confirmed: true
+        mode: "already_on_instance"
+        probe: "${odoo_url_meta_pre}"
+
+  - name: Handle login or signup flow (autonomous)
+    if_not: "${odoo_url_meta_pre.is_instance}"
+    playbook: "./01_auth_or_signup/playbook.yml"
+  - name: Wait for provisioned Odoo instance URL
+    if_not: "${odoo_url_meta_pre.is_instance}"
+    action: Helium.WaitUntilUrl
+    params:
+      port: "${DEBUG_PORT}"
+      host_endswith: ".odoo.com"
+      host_not_equals: "www.odoo.com"
+      url_not_contains: "/trial"
+      timeout_secs: 600
+      interval_ms: 800
+
+  - name: Capture Odoo instance URL metadata
+    action: Helium.GetUrlMeta
+    register: odoo_url_meta
+    params:
+      port: "${DEBUG_PORT}"
+      main_domain: "odoo.com"
+      reserved_subdomains:
+        - "www"
+      exclude_url_regex: "i)/trial"
+      expected_base: "${ODOO_INSTANCE_ALIAS_BASE}"
+
+  - name: Abort if not on provisioned Odoo instance
+    if_not: "${odoo_url_meta.is_instance}"
+    action: Fail
+    params:
+      text: "Detected URL is not a provisioned Odoo instance: ${odoo_url_meta.url}"
+
+  - name: Abort if alias base does not match expected electroprice naming
+    if_not: "${odoo_url_meta.alias_base_match}"
+    action: Fail
+    params:
+      text: "Detected Odoo instance alias does not match expected base '${ODOO_INSTANCE_ALIAS_BASE}': ${odoo_url_meta.url}"
+
+  - name: Capture screenshot after instance creation
+    action: DemoCreator.CaptureScreenshot
+    params:
+      port: "${DEBUG_PORT}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+      output_path: "${OUTPUT_DIR}\\odoo_trial_after.png"
+      format: "png"
+
+  - name: Persist Odoo instance URL
+    action: FS.WriteText
+    params:
+      path: "${OUTPUT_DIR}\\odoo_instance_url.txt"
+      text: "${odoo_url_meta.url}"
+      overwrite: true
+
+  - name: Persist Odoo instance alias
+    action: FS.WriteText
+    params:
+      path: "${OUTPUT_DIR}\\odoo_instance_alias.txt"
+      text: "${odoo_url_meta.subdomain}"
+      overwrite: true
+
+  - name: Export ODOO_URL into context for subsequent playbooks
+    action: Set
+    params:
+      name: ODOO_URL
+      value: "${odoo_url_meta.url}"
+

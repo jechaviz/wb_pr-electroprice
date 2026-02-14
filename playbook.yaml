@@ -47,23 +47,23 @@ variables:
 steps:
   prod:
     - name: Bootstrap docs and governance
-      playbook: "./playbooks/bootstrap/docs/playbook.yml"
+      playbook: "./playbooks/01_bootstrap/01_docs/playbook.yml"
 
     - name: Bootstrap runtime
-      playbook: "./playbooks/bootstrap/runtime/playbook.yml"
+      playbook: "./playbooks/01_bootstrap/02_runtime/playbook.yml"
 
     - name: Publish WAIBA project repo (first run)
       if: "${PUBLISH_PROJECT_REPO}"
-      playbook: "./playbooks/bootstrap/publish_project_repo/playbook.yml"
+      playbook: "./playbooks/01_bootstrap/04_publish_project_repo/playbook.yml"
 
     - name: Execute main task
-      playbook: "./playbooks/task/execute/playbook.yml"
+      playbook: "./playbooks/02_task/01_execute/playbook.yml"
 
     - name: Validate readiness artifacts
-      playbook: "./playbooks/finalize/validate/playbook.yml"
+      playbook: "./playbooks/03_finalize/01_validate/playbook.yml"
 
     - name: Mark task completed
-      playbook: "./playbooks/finalize/complete/playbook.yml"
+      playbook: "./playbooks/03_finalize/02_complete/playbook.yml"
 
   sync:
     - action: Set
@@ -77,10 +77,10 @@ steps:
         value: true
 
     - name: Bootstrap runtime
-      playbook: "./playbooks/bootstrap/runtime/playbook.yml"
+      playbook: "./playbooks/01_bootstrap/02_runtime/playbook.yml"
 
     - name: Publish WAIBA project repo
-      playbook: "./playbooks/bootstrap/publish_project_repo/playbook.yml"
+      playbook: "./playbooks/01_bootstrap/04_publish_project_repo/playbook.yml"
 
   trial_only:
     - action: Set
@@ -94,10 +94,10 @@ steps:
         value: false
 
     - name: Bootstrap runtime
-      playbook: "./playbooks/bootstrap/runtime/playbook.yml"
+      playbook: "./playbooks/01_bootstrap/02_runtime/playbook.yml"
 
     - name: Create Odoo Enterprise instance (autonomous)
-      playbook: "./playbooks/odoo/trial/create/playbook.yml"
+      playbook: "./playbooks/02_task/02_odoo/01_trial_create/playbook.yml"
 
   debug:
     - action: Note
