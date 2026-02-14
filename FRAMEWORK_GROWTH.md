@@ -103,3 +103,4 @@ Tracks extension points discovered during project execution:
 - 2026-02-14 09:03:29 | category=ecommerce | note=Project initialized from modular framework template
 - 2026-02-14 09:03:45 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold + legacy catalog migration seed.
 - 2026-02-14 09:07:48 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 09:08:10 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold + legacy catalog migration seed.
