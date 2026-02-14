@@ -75,6 +75,7 @@
   - `odoo.login_password`
   - `odoo.trial_email`
   - `odoo.trial_phone`
+- `odoo.trial_email` must be a real accessible inbox (noreply aliases are rejected by policy).
 
 ## Autonomous Trial Variables
 - `AUTONOMOUS_MODE`: `true` to avoid blocking prompts.

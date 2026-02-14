@@ -208,35 +208,27 @@
               name: TRIAL_EMAIL_SOURCE
               value: "secrets.odoo.login_email"
 
-          - name: Fallback TRIAL_EMAIL from project git config
-            if_not: "${TRIAL_EMAIL}"
-            action: Shell.Run
-            register: trial_email_from_git
-            ignore_errors: true
+          - name: Validate trial email policy (must be a usable inbox)
+            if: "${TRIAL_EMAIL}"
+            action: Shell.RunJson
+            register: trial_email_policy
             confirm_progress: false
             params:
-              command: "git config user.email"
-              workdir: "${ROOT_PLAYBOOK_DIR}"
-              timeout_ms: 5000
+              command: 'powershell -NoProfile -Command "$e = (''${TRIAL_EMAIL}'' | Out-String).Trim().ToLower(); $ok = $true; $reason = ''ok''; if ($e -eq '''') { $ok = $false; $reason = ''missing'' } elseif ($e -match ''@users\.noreply\.github\.com$'' -or $e -match ''(^|[^a-z])no-?reply([^a-z]|$)'') { $ok = $false; $reason = ''noreply_not_usable'' }; @{ ok = $ok; reason = $reason; email = $e } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
               allow_fail: true
+              unsafe: true
 
-          - name: Export TRIAL_EMAIL from project git config output
-            if_not: "${TRIAL_EMAIL}"
-            if: "${trial_email_from_git.stdout}"
-            action: Set
-            confirm_progress: false
+          - name: Abort if trial email violates policy
+            if: "${TRIAL_EMAIL}"
+            if_not: "${trial_email_policy.json.ok}"
+            action: Fail
             params:
-              name: TRIAL_EMAIL
-              value: "${trial_email_from_git.stdout}"
-
-          - name: Track trial email source from git config
-            if_not: "${TRIAL_EMAIL_SOURCE}"
-            if: "${trial_email_from_git.stdout}"
-            action: Set
-            confirm_progress: false
-            params:
-              name: TRIAL_EMAIL_SOURCE
-              value: "git.config.user.email"
+              text: |
+                TRIAL_EMAIL is not usable for activation links/codes: ${trial_email_policy.json.email}
+                Reason: ${trial_email_policy.json.reason}
+                Use a real accessible inbox in:
+                - ${ROOT_PLAYBOOK_DIR}\secrets.yml
+                - ${SCRIPT_DIR}\secrets.yml
 
           - name: Ensure trial email field is filled
             if: "${TRIAL_EMAIL}"
