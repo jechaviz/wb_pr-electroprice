@@ -4,7 +4,10 @@ steps:
     params:
       port: "${DEBUG_PORT}"
       open_url: "${ODOO_TRIAL_URL}"
+      minimize_window: true
+      kill_existing: false
       target_type: page
+      target_url_contains: "odoo.com"
       exclude_url_contains: "devtools://|edge://|chrome://"
 
   - name: Wait for Odoo trial page
@@ -94,48 +97,77 @@ steps:
         - ${OUTPUT_DIR}\\debug_evidence
 
   - name: Click Continue (after app selection)
-    loop:
-      - "Continue"
-      - "Continuar"
-      - "Next"
     steps:
-      - name: Find continue in-page (Ctrl+F style): ${loop.item}
-        action: Helium.FindInPage
-        register: continue_find
-        ignore_errors: true
-        confirm_progress: false
-        params:
-          port: "${DEBUG_PORT}"
-          text: "${loop.item}"
-          highlight_ms: 1200
-          retry_interval_ms: 0
-
-      - name: Click continue via selection point: ${loop.item}
-        if: "${continue_find.found}"
+      - name: Click continue primary selector (deterministic)
         action: Helium.ClickNative
         register: continue_click
         ignore_errors: true
-        confirm_after_wait_ms: 1200
-        params:
-          port: "${DEBUG_PORT}"
-          element: "${continue_find.point}"
-          implicit_wait_ms: 1500
-          retry_interval_ms: 150
-
-      - name: Fallback click continue button by DOM search: ${loop.item}
-        if_not: "${continue_click.ok}"
-        action: Helium.Click
-        register: continue_click
-        ignore_errors: true
-        confirm_after_wait_ms: 1200
+        confirm_after_wait_ms: 1000
         params:
           port: "${DEBUG_PORT}"
           element:
-            kind: button
-            text: "${loop.item}"
+            kind: s
+            selector: "button.openerp_enterprise_validate_trial, button.btn.btn-lg.btn-primary.openerp_enterprise_validate_trial"
           implicit_wait_ms: 1500
-          retry_interval_ms: 200
-      - break_if: "${continue_click.ok}"
+          retry_interval_ms: 150
+
+      - if_not: "${continue_click.ok}"
+        loop:
+          - "Continue"
+          - "Continuar"
+          - "Next"
+        steps:
+          - name: Click continue button by native button locator: ${loop.item}
+            action: Helium.ClickNative
+            register: continue_click
+            ignore_errors: true
+            confirm_after_wait_ms: 1000
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: button
+                text: "${loop.item}"
+              implicit_wait_ms: 1200
+              retry_interval_ms: 150
+
+          - name: Find continue in-page (Ctrl+F style): ${loop.item}
+            if_not: "${continue_click.ok}"
+            action: Helium.FindInPage
+            register: continue_find
+            ignore_errors: true
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              text: "${loop.item}"
+              highlight_ms: 1200
+              retry_interval_ms: 0
+
+          - name: Click continue via selection point: ${loop.item}
+            if: "${continue_find.found}"
+            action: Helium.ClickNative
+            register: continue_click
+            ignore_errors: true
+            confirm_after_wait_ms: 1200
+            params:
+              port: "${DEBUG_PORT}"
+              element: "${continue_find.point}"
+              implicit_wait_ms: 1500
+              retry_interval_ms: 150
+
+          - name: Fallback click continue button by DOM search: ${loop.item}
+            if_not: "${continue_click.ok}"
+            action: Helium.Click
+            register: continue_click
+            ignore_errors: true
+            confirm_after_wait_ms: 1200
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: button
+                text: "${loop.item}"
+              implicit_wait_ms: 1500
+              retry_interval_ms: 200
+          - break_if: "${continue_click.ok}"
 
   - name: Abort if Continue button was not found
     if_not: "${continue_click.ok}"
@@ -286,7 +318,7 @@ steps:
               interval_ms: 300
               exists:
                 kind: s
-                selector: "input[type='email'], input[name*='email' i], input[autocomplete='email']"
+                selector: "input#email, input[id*='email' i], input[type='email'], input[name*='email' i], input[autocomplete='email'], input[placeholder*='mail' i]"
 
           - name: Focus trial email field
             action: Helium.ClickNative
@@ -295,7 +327,7 @@ steps:
               port: "${DEBUG_PORT}"
               element:
                 kind: s
-                selector: "input[type='email'], input[name*='email' i], input[autocomplete='email']"
+                selector: "input#email, input[id*='email' i], input[type='email'], input[name*='email' i], input[autocomplete='email'], input[placeholder*='mail' i]"
               implicit_wait_ms: 8000
               retry_interval_ms: 200
 
@@ -308,7 +340,7 @@ steps:
               text: "${TRIAL_EMAIL}"
               into:
                 kind: s
-                selector: "input[type='email'], input[name*='email' i], input[autocomplete='email']"
+                selector: "input#email, input[id*='email' i], input[type='email'], input[name*='email' i], input[autocomplete='email'], input[placeholder*='mail' i]"
               implicit_wait_ms: 8000
               retry_interval_ms: 200
 
@@ -336,7 +368,7 @@ steps:
                   port: "${DEBUG_PORT}"
                   element:
                     kind: s
-                    selector: "input[type='email'], input[name*='email' i], input[autocomplete='email']"
+                    selector: "input#email, input[id*='email' i], input[type='email'], input[name*='email' i], input[autocomplete='email'], input[placeholder*='mail' i]"
               - name: Export selected email into context
                 action: Set
                 confirm_progress: false

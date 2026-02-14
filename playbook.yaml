@@ -86,12 +86,12 @@ steps:
     - action: Set
       params:
         name: DEBUG_EVIDENCE
-        value: true
+        value: false
 
     - action: Set
       params:
         name: DEBUG_SCREENSHOTS
-        value: true
+        value: false
 
     - name: Bootstrap runtime
       playbook: "./playbooks/bootstrap/runtime/playbook.yml"
