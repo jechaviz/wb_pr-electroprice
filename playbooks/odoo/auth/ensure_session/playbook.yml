@@ -1,4 +1,4 @@
-steps:
+﻿steps:
   - name: Ensure ODOO_URL is present
     if_not: "${ODOO_URL}"
     action: Fail
@@ -76,11 +76,22 @@ steps:
       - name: Fallback click Sign in by text (credential path)
         if: "${ODOO_LOGIN_EMAIL}"
         if_not: "${odoo_signin_click.ok}"
+        learn:
+          key: "odoo.auth.signin_label"
+          success_if: "${odoo_signin_click.ok}"
+          value: "${loop.item}"
+          strict: true
+          export_var: "ODOO_SIGNIN_LABEL_HIT"
+          prune:
+            enabled: true
+            marker_begin: "BEGIN_SIGNIN_LABEL_CANDIDATES"
+            marker_end: "END_SIGNIN_LABEL_CANDIDATES"
         loop:
+          # BEGIN_SIGNIN_LABEL_CANDIDATES
           - "Sign in"
           - "Iniciar sesion"
-          - "Iniciar sesión"
           - "Log in"
+          # END_SIGNIN_LABEL_CANDIDATES
         steps:
           - name: Click auth button by text: ${loop.item}
             action: Helium.Click
@@ -95,6 +106,15 @@ steps:
               implicit_wait_ms: 1200
               retry_interval_ms: 150
           - break_if: "${odoo_signin_click.ok}"
+
+      - name: Persist learned Sign in label
+        if: "${ODOO_SIGNIN_LABEL_HIT}"
+        action: FS.WriteText
+        confirm_progress: false
+        params:
+          path: "${OUTPUT_DIR}\\odoo_signin_label.txt"
+          text: "${ODOO_SIGNIN_LABEL_HIT}"
+          overwrite: true
 
   - name: Login with browser autofill fallback
     if: "${odoo_login_visible.exists}"
@@ -185,6 +205,47 @@ steps:
   - name: Abort if session is still unauthenticated
     if: "${odoo_login_visible.exists}"
     steps:
+      - name: Capture auth debug screenshot
+        if: "${odoo_login_still_visible.exists}"
+        action: DemoCreator.CaptureScreenshot
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          target_type: page
+          target_url_contains: ".odoo.com"
+          output_path: "${OUTPUT_DIR}\\auth_login_debug.png"
+          format: "png"
+
+      - name: Capture auth debug probe
+        if: "${odoo_login_still_visible.exists}"
+        action: Helium.Probe
+        register: odoo_auth_debug_probe
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+
+      - name: Persist auth debug bundle
+        if: "${odoo_login_still_visible.exists}"
+        action: FS.WriteJson
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          path: "${OUTPUT_DIR}\\odoo_auth_debug.json"
+          overwrite: true
+          value:
+            ok: false
+            reason: "login_form_still_visible"
+            odoo_url: "${ODOO_URL}"
+            learned_signin_label: "${ODOO_SIGNIN_LABEL_HIT}"
+            guidance_hierarchy:
+              - "1) Use DOM semantic selector first (button[type=submit], btn-primary)."
+              - "2) Use learned localized text label if available."
+              - "3) Use Ctrl+F style targeting via Helium.FindInPage."
+              - "4) Use OCR/vision fallback with evidence screenshots."
+            probe: "${odoo_auth_debug_probe}"
+
       - name: Fail when login form is still visible after auth attempt
         if: "${odoo_login_still_visible.exists}"
         action: Fail
@@ -193,6 +254,9 @@ steps:
             Could not authenticate into Odoo automatically.
             Provide valid credentials in secrets (`odoo.login_email`/`odoo.login_password`)
             or ensure browser saved credentials are available.
+            Debug artifacts:
+            - ${OUTPUT_DIR}\\auth_login_debug.png
+            - ${OUTPUT_DIR}\\odoo_auth_debug.json
 
   - name: Persist authenticated session checkpoint
     action: FS.WriteJson
@@ -204,3 +268,4 @@ steps:
         odoo_url: "${ODOO_URL}"
         login_page_initially_visible: "${odoo_login_visible.exists}"
         login_page_still_visible: "${odoo_login_still_visible.exists}"
+        learned_signin_label: "${ODOO_SIGNIN_LABEL_HIT}"
