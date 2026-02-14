@@ -144,6 +144,9 @@ steps:
     if_not: "${ODOO_URL}"
     playbook: "../../odoo/trial/create/playbook.yml"
 
+  - name: Ensure authenticated Odoo session
+    playbook: "../../odoo/auth/ensure_session/playbook.yml"
+
   - name: Check eCommerce checkpoint
     action: FS.Exists
     register: has_ecommerce_checkpoint

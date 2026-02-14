@@ -1,0 +1,206 @@
+steps:
+  - name: Ensure ODOO_URL is present
+    if_not: "${ODOO_URL}"
+    action: Fail
+    params:
+      text: "Missing ODOO_URL. Cannot ensure authenticated Odoo session."
+
+  - name: Connect to Odoo tab (CDP)
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_URL}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Navigate to Odoo URL
+    action: CDP.Navigate
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+      wait_ms: 2800
+
+  - name: Check if login page is visible
+    action: Helium.Exists
+    register: odoo_login_visible
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "form[action*='/web/login'], input[name='login'], input[type='password']"
+
+  - name: Login with configured credentials
+    if: "${odoo_login_visible.exists}"
+    steps:
+      - name: Fill login email (from secrets)
+        if: "${ODOO_LOGIN_EMAIL}"
+        action: Helium.Write
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${ODOO_LOGIN_EMAIL}"
+          into:
+            kind: s
+            selector: "input[name='login'], input[type='email'], input[autocomplete='username'], input[autocomplete='email']"
+          implicit_wait_ms: 5000
+          retry_interval_ms: 150
+
+      - name: Fill login password (from secrets)
+        if: "${ODOO_LOGIN_PASSWORD}"
+        action: Helium.Write
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${ODOO_LOGIN_PASSWORD}"
+          into:
+            kind: s
+            selector: "input[type='password'], input[name='password'], input[autocomplete='current-password']"
+          implicit_wait_ms: 5000
+          retry_interval_ms: 150
+
+      - name: Click Sign in button (credential path)
+        if: "${ODOO_LOGIN_EMAIL}"
+        action: Helium.Click
+        register: odoo_signin_click
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element:
+            kind: s
+            selector: "button[type='submit'], button.btn-primary"
+          implicit_wait_ms: 3500
+          retry_interval_ms: 150
+
+      - name: Fallback click Sign in by text (credential path)
+        if: "${ODOO_LOGIN_EMAIL}"
+        if_not: "${odoo_signin_click.ok}"
+        loop:
+          - "Sign in"
+          - "Iniciar sesion"
+          - "Iniciar sesión"
+          - "Log in"
+        steps:
+          - name: Click auth button by text: ${loop.item}
+            action: Helium.Click
+            register: odoo_signin_click
+            ignore_errors: true
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: button
+                text: "${loop.item}"
+              implicit_wait_ms: 1200
+              retry_interval_ms: 150
+          - break_if: "${odoo_signin_click.ok}"
+
+  - name: Login with browser autofill fallback
+    if: "${odoo_login_visible.exists}"
+    if_not: "${ODOO_LOGIN_EMAIL}"
+    steps:
+      - name: Focus login field
+        action: Helium.ClickNative
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element:
+            kind: s
+            selector: "input[name='login'], input[type='email'], input[autocomplete='username'], input[autocomplete='email']"
+          implicit_wait_ms: 2500
+          retry_interval_ms: 150
+
+      - name: Pick first saved login suggestion
+        action: Helium.Press
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          key: "DOWN"
+
+      - name: Accept saved login suggestion
+        action: Helium.Press
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          key: "ENTER"
+
+      - name: Focus password field
+        action: Helium.ClickNative
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element:
+            kind: s
+            selector: "input[type='password'], input[name='password'], input[autocomplete='current-password']"
+          implicit_wait_ms: 2500
+          retry_interval_ms: 150
+
+      - name: Pick first saved password suggestion
+        action: Helium.Press
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          key: "DOWN"
+
+      - name: Accept saved password suggestion
+        action: Helium.Press
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          key: "ENTER"
+
+      - name: Submit login after autofill
+        action: Helium.Press
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          key: "ENTER"
+
+  - name: Wait until login page is gone
+    if: "${odoo_login_visible.exists}"
+    action: Helium.WaitUntilUrl
+    register: odoo_login_redirect
+    ignore_errors: true
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      host_endswith: ".odoo.com"
+      url_not_contains: "/web/login"
+      timeout_secs: 25
+      interval_ms: 400
+
+  - name: Check login page after auth attempt
+    action: Helium.Exists
+    register: odoo_login_still_visible
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "form[action*='/web/login'], input[name='login'], input[type='password']"
+
+  - name: Abort if session is still unauthenticated
+    if: "${odoo_login_visible.exists}"
+    steps:
+      - name: Fail when login form is still visible after auth attempt
+        if: "${odoo_login_still_visible.exists}"
+        action: Fail
+        params:
+          text: |
+            Could not authenticate into Odoo automatically.
+            Provide valid credentials in secrets (`odoo.login_email`/`odoo.login_password`)
+            or ensure browser saved credentials are available.
+
+  - name: Persist authenticated session checkpoint
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_session_checkpoint.json"
+      overwrite: true
+      value:
+        ok: true
+        odoo_url: "${ODOO_URL}"
+        login_page_initially_visible: "${odoo_login_visible.exists}"
+        login_page_still_visible: "${odoo_login_still_visible.exists}"
