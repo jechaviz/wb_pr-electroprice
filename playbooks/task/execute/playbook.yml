@@ -105,7 +105,7 @@ steps:
     action: Shell.RunJson
     register: existing_odoo_url_validation
     params:
-      command: 'powershell -NoProfile -Command "$u = ''${existing_odoo_url_artifact}''; $u = ($u | Out-String).Trim(); $base = (''${ODOO_INSTANCE_ALIAS_BASE}'' | Out-String).Trim().ToLower(); $ok = $false; $host = ''''; if ($u -ne '''') { try { $host = ([uri]$u).Host.ToLower(); $isOdoo = $host -like ''*.odoo.com'' -and $host -ne ''www.odoo.com''; $aliasOk = ($host -eq ($base + ''.odoo.com'')) -or ($host -like ($base + ''-*.odoo.com'')); $ok = $isOdoo -and $aliasOk } catch { $ok = $false } }; @{ ok = $ok; url = $u; host = $host; expected_base = $base } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
+      command: 'powershell -NoProfile -Command "$u = ''${existing_odoo_url_artifact}''; $u = ($u | Out-String).Trim(); $base = (''${ODOO_INSTANCE_ALIAS_BASE}'' | Out-String).Trim().ToLower(); $ok = $false; $odooHost = ''''; if ($u -ne '''') { try { $odooHost = ([uri]$u).Host.ToLower(); $isOdoo = $odooHost -like ''*.odoo.com'' -and $odooHost -ne ''www.odoo.com''; $sub = $odooHost -replace ''\.odoo\.com$'', ''''; $aliasOk = ($sub -eq $base) -or ($sub -like ($base + ''-*'')) -or ($sub -match (''^'' + [regex]::Escape($base) + ''\d+$'')); $ok = $isOdoo -and $aliasOk } catch { $ok = $false } }; @{ ok = $ok; url = $u; host = $odooHost; expected_base = $base } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
       allow_fail: true
       unsafe: true
 

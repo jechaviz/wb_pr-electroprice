@@ -32,7 +32,7 @@ steps:
     action: Shell.RunJson
     register: odoo_url_alias_check
     params:
-      command: 'powershell -NoProfile -Command "$u = Get-Content -Raw -Path ''${OUTPUT_DIR}\\odoo_instance_url.txt''; $u = ($u | Out-String).Trim(); $base = (''${ODOO_INSTANCE_ALIAS_BASE}'' | Out-String).Trim().ToLower(); $ok = $false; $host = ''''; $sub = ''''; if ($u -ne '''') { try { $host = ([uri]$u).Host.ToLower(); if ($host -like ''*.odoo.com'' -and $host -ne ''www.odoo.com'') { $sub = $host -replace ''\.odoo\.com$'', ''''; $ok = ($sub -eq $base) -or ($sub -like ($base + ''-*'')) } } catch { $ok = $false } }; @{ ok = $ok; url = $u; host = $host; subdomain = $sub; expected_base = $base } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
+      command: 'powershell -NoProfile -Command "$u = Get-Content -Raw -Path ''${OUTPUT_DIR}\\odoo_instance_url.txt''; $u = ($u | Out-String).Trim(); $base = (''${ODOO_INSTANCE_ALIAS_BASE}'' | Out-String).Trim().ToLower(); $ok = $false; $odooHost = ''''; $sub = ''''; if ($u -ne '''') { try { $odooHost = ([uri]$u).Host.ToLower(); if ($odooHost -like ''*.odoo.com'' -and $odooHost -ne ''www.odoo.com'') { $sub = $odooHost -replace ''\.odoo\.com$'', ''''; $ok = ($sub -eq $base) -or ($sub -like ($base + ''-*'')) -or ($sub -match (''^'' + [regex]::Escape($base) + ''\d+$'')) } } catch { $ok = $false } }; @{ ok = $ok; url = $u; host = $odooHost; subdomain = $sub; expected_base = $base } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
       allow_fail: true
       unsafe: true
 
