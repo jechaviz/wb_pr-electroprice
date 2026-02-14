@@ -66,6 +66,24 @@ steps:
     params:
       path: "${OUTPUT_DIR}\\wholesaler_integration_scaffold_checkpoint.json"
 
+  - name: Validate legacy migration checkpoint artifact
+    action: FS.Exists
+    register: has_legacy_migration_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_legacy_migration_checkpoint.json"
+
+  - name: Validate Odoo solution bundle checkpoint artifact
+    action: FS.Exists
+    register: has_odoo_solution_bundle_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_solution_bundle_checkpoint.json"
+
+  - name: Validate marketplace MVP checkpoint artifact
+    action: FS.Exists
+    register: has_marketplace_mvp_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_marketplace_mvp_checkpoint.json"
+
   - name: Connect to Odoo tab for live baseline verification
     if: "${has_odoo_url}"
     action: CDP.Connect
@@ -96,6 +114,7 @@ steps:
     register: odoo_live_verify
     params:
       port: "${DEBUG_PORT}"
+      timeout_ms: 45000
       await_promise: true
       expression: "${js_odoo_verify_baseline}"
 
@@ -106,6 +125,81 @@ steps:
       path: "${OUTPUT_DIR}\\odoo_live_verify.json"
       overwrite: true
       value: "${odoo_live_verify}"
+
+  - name: Load Odoo migration parity verifier script
+    if: "${has_odoo_url}"
+    action: FS.ReadText
+    register: js_odoo_verify_migration_parity
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_verify_migration_parity.js"
+
+  - name: Execute live Odoo migration parity verification
+    if: "${has_odoo_url}"
+    action: CDP.EvaluateJson
+    register: odoo_live_migration_verify
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 45000
+      await_promise: true
+      expression: "${js_odoo_verify_migration_parity}"
+
+  - name: Persist live Odoo migration parity artifact
+    if: "${has_odoo_url}"
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_live_migration_verify.json"
+      overwrite: true
+      value: "${odoo_live_migration_verify}"
+
+  - name: Load Odoo solution bundle verifier script
+    if: "${has_odoo_url}"
+    action: FS.ReadText
+    register: js_odoo_verify_solution_bundle
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_verify_solution_bundle.js"
+
+  - name: Execute live Odoo solution bundle verification
+    if: "${has_odoo_url}"
+    action: CDP.EvaluateJson
+    register: odoo_live_solution_bundle_verify
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 45000
+      await_promise: true
+      expression: "${js_odoo_verify_solution_bundle}"
+
+  - name: Persist live Odoo solution bundle verification artifact
+    if: "${has_odoo_url}"
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_live_solution_bundle_verify.json"
+      overwrite: true
+      value: "${odoo_live_solution_bundle_verify}"
+
+  - name: Load Odoo marketplace MVP verifier script
+    if: "${has_odoo_url}"
+    action: FS.ReadText
+    register: js_odoo_verify_marketplace_mvp
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_verify_marketplace_mvp.js"
+
+  - name: Execute live Odoo marketplace MVP verification
+    if: "${has_odoo_url}"
+    action: CDP.EvaluateJson
+    register: odoo_live_marketplace_mvp_verify
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 45000
+      await_promise: true
+      expression: "${js_odoo_verify_marketplace_mvp}"
+
+  - name: Persist live Odoo marketplace MVP verification artifact
+    if: "${has_odoo_url}"
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_live_marketplace_mvp_verify.json"
+      overwrite: true
+      value: "${odoo_live_marketplace_mvp_verify}"
 
   - name: Build readiness report
     action: FS.WriteJson
@@ -130,11 +224,32 @@ steps:
           dropshipping_ops_checkpoint: "${has_dropship_checkpoint}"
           branding_checkpoint: "${has_branding_checkpoint}"
           wholesaler_scaffold_checkpoint: "${has_wholesaler_scaffold}"
+          legacy_migration_checkpoint: "${has_legacy_migration_checkpoint}"
+          odoo_solution_bundle_checkpoint: "${has_odoo_solution_bundle_checkpoint}"
+          marketplace_mvp_checkpoint: "${has_marketplace_mvp_checkpoint}"
           odoo_live_verify_ok: "${odoo_live_verify.ok}"
           odoo_live_verify_missing_modules: "${odoo_live_verify.missing_modules}"
           odoo_live_verify_company_brand_ok: "${odoo_live_verify.company_brand_ok}"
           odoo_live_verify_website_brand_ok: "${odoo_live_verify.website_brand_ok}"
           odoo_live_verify_has_drop_routes: "${odoo_live_verify.has_drop_routes}"
+          odoo_live_migration_verify_ok: "${odoo_live_migration_verify.ok}"
+          odoo_live_migration_missing_categories: "${odoo_live_migration_verify.missing_categories}"
+          odoo_live_migration_missing_suppliers: "${odoo_live_migration_verify.missing_suppliers}"
+          odoo_live_migration_missing_products: "${odoo_live_migration_verify.missing_products}"
+          odoo_live_migration_products_without_supplier_lines: "${odoo_live_migration_verify.products_without_supplier_lines}"
+          odoo_live_solution_bundle_verify_ok: "${odoo_live_solution_bundle_verify.ok}"
+          odoo_live_solution_bundle_missing_actions: "${odoo_live_solution_bundle_verify.missing_actions}"
+          odoo_live_solution_bundle_missing_public_categories: "${odoo_live_solution_bundle_verify.missing_public_categories}"
+          odoo_live_solution_bundle_missing_frontend_assignments: "${odoo_live_solution_bundle_verify.missing_frontend_assignments}"
+          odoo_live_marketplace_mvp_verify_ok: "${odoo_live_marketplace_mvp_verify.ok}"
+          odoo_live_marketplace_mvp_missing_suppliers: "${odoo_live_marketplace_mvp_verify.missing_suppliers}"
+          odoo_live_marketplace_mvp_missing_channels: "${odoo_live_marketplace_mvp_verify.missing_channels}"
+          odoo_live_marketplace_mvp_missing_carriers: "${odoo_live_marketplace_mvp_verify.missing_carriers}"
+          odoo_live_marketplace_mvp_carriers_without_tracking_url: "${odoo_live_marketplace_mvp_verify.carriers_without_tracking_url}"
+          odoo_live_marketplace_mvp_missing_pricelists: "${odoo_live_marketplace_mvp_verify.missing_pricelists}"
+          odoo_live_marketplace_mvp_missing_connector_keys: "${odoo_live_marketplace_mvp_verify.missing_connector_keys}"
+          odoo_live_marketplace_mvp_has_website_page_model: "${odoo_live_marketplace_mvp_verify.has_website_page_model}"
+          odoo_live_marketplace_mvp_missing_portal_pages: "${odoo_live_marketplace_mvp_verify.missing_portal_pages}"
 
   - name: Abort if repo sync artifact is missing
     if_not: "${has_repo_sync}"
@@ -190,8 +305,44 @@ steps:
     params:
       command: "exit 1"
 
+  - name: Abort if legacy migration checkpoint is missing
+    if_not: "${has_legacy_migration_checkpoint}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if Odoo solution bundle checkpoint is missing
+    if_not: "${has_odoo_solution_bundle_checkpoint}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if marketplace MVP checkpoint is missing
+    if_not: "${has_marketplace_mvp_checkpoint}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
   - name: Abort if live Odoo verification failed
     if_not: "${odoo_live_verify.ok}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if live Odoo migration parity verification failed
+    if_not: "${odoo_live_migration_verify.ok}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if live Odoo solution bundle verification failed
+    if_not: "${odoo_live_solution_bundle_verify.ok}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if live Odoo marketplace MVP verification failed
+    if_not: "${odoo_live_marketplace_mvp_verify.ok}"
     action: Shell.Run
     params:
       command: "exit 1"

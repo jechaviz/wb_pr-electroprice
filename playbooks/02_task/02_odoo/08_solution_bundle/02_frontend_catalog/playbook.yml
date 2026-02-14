@@ -1,0 +1,41 @@
+steps:
+  - name: Ensure ODOO_URL exists
+    if_not: "${ODOO_URL}"
+    action: Fail
+    params:
+      text: "Missing ODOO_URL before frontend catalog configuration."
+
+  - name: Connect to Odoo tab
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_URL}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Navigate to Odoo instance
+    action: CDP.Navigate
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+      wait_ms: 2000
+
+  - name: Load frontend catalog configurator script
+    action: FS.ReadText
+    register: js_odoo_configure_frontend_catalog
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_configure_frontend_catalog.js"
+
+  - name: Execute Odoo frontend catalog configuration
+    action: CDP.EvaluateJson
+    register: odoo_frontend_catalog_result
+    params:
+      port: "${DEBUG_PORT}"
+      await_promise: true
+      expression: "${js_odoo_configure_frontend_catalog}"
+
+  - name: Abort if frontend catalog did not configure
+    if_not: "${odoo_frontend_catalog_result.ok}"
+    action: Fail
+    params:
+      text: "Frontend catalog configuration failed: ${odoo_frontend_catalog_result.error}${odoo_frontend_catalog_result.reason}"

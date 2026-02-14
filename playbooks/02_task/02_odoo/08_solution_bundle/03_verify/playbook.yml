@@ -1,0 +1,49 @@
+steps:
+  - name: Ensure ODOO_URL exists
+    if_not: "${ODOO_URL}"
+    action: Fail
+    params:
+      text: "Missing ODOO_URL before solution bundle verification."
+
+  - name: Connect to Odoo tab
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_URL}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Navigate to Odoo instance
+    action: CDP.Navigate
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+      wait_ms: 1500
+
+  - name: Load solution bundle verifier script
+    action: FS.ReadText
+    register: js_odoo_verify_solution_bundle
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_verify_solution_bundle.js"
+
+  - name: Execute Odoo solution bundle verification
+    action: CDP.EvaluateJson
+    register: odoo_solution_bundle_verify
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 45000
+      await_promise: true
+      expression: "${js_odoo_verify_solution_bundle}"
+
+  - name: Abort if solution bundle verification failed
+    if_not: "${odoo_solution_bundle_verify.ok}"
+    action: Fail
+    params:
+      text: "Solution bundle verification failed: ${odoo_solution_bundle_verify.error}${odoo_solution_bundle_verify.reason}"
+
+  - name: Persist Odoo solution bundle live verification artifact
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_live_solution_bundle_verify.json"
+      overwrite: true
+      value: "${odoo_solution_bundle_verify}"

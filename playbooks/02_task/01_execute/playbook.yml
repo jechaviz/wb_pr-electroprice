@@ -197,9 +197,39 @@ steps:
     if_not: "${has_wholesaler_scaffold}"
     playbook: "../03_integration/01_wholesalers_scaffold/playbook.yml"
 
+  - name: Check legacy migration checkpoint
+    action: FS.Exists
+    register: has_legacy_migration_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_legacy_migration_checkpoint.json"
+
+  - name: Seed legacy Electroprice catalog into Odoo
+    if_not: "${has_legacy_migration_checkpoint}"
+    playbook: "../02_odoo/07_seed_legacy_catalog/playbook.yml"
+
+  - name: Check Odoo solution bundle checkpoint
+    action: FS.Exists
+    register: has_odoo_solution_bundle_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_solution_bundle_checkpoint.json"
+
+  - name: Apply Odoo solution bundle (config + server actions + frontend)
+    if_not: "${has_odoo_solution_bundle_checkpoint}"
+    playbook: "../02_odoo/08_solution_bundle/playbook.yml"
+
+  - name: Check marketplace MVP checkpoint
+    action: FS.Exists
+    register: has_marketplace_mvp_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_marketplace_mvp_checkpoint.json"
+
+  - name: Apply marketplace MVP layer (global suppliers + channels + shipping + pricing)
+    if_not: "${has_marketplace_mvp_checkpoint}"
+    playbook: "../02_odoo/09_marketplace_mvp/playbook.yml"
+
   - name: Track framework growth: Electroprice dropshipping baseline
     action: Framework.TrackGrowth
     params:
       project_dir: "${PROJECT_DIR}"
       category: "ecommerce"
-      note: "Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold."
+      note: "Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold + legacy catalog migration seed."

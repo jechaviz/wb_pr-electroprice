@@ -38,7 +38,23 @@
 - Core operations modules installed (sales/purchase/inventory/accounting/website).
 - Dropshipping module and route baseline enabled.
 - Branding baseline set to Electroprice.
+- Legacy Electroprice catalog baseline seeded into Odoo (`ELECTRO-*` product codes + suppliers).
+- Odoo solution bundle applied:
+  - Configuration layer
+  - Server actions layer
+  - Frontend catalog layer
+- Marketplace MVP layer applied:
+  - Global suppliers (China + Amazon-style sourcing)
+  - Marketplace channels (Shopee/MercadoLibre/Amazon style)
+  - Shipping carriers and channel pricelists
+  - Carrier tracking URL baseline
+  - Customer portal pages (`/my/electroprice-dashboard`, `/track-order`)
+  - Logistics workflow params for dropship -> rebrand -> redispatch
+  - Connector parameter registry for API orchestration
 - Live baseline verification artifact generated (`playbooks/output/odoo_live_verify.json`).
+- Live migration parity verification artifact generated (`playbooks/output/odoo_live_migration_verify.json`).
+- Live solution bundle verification artifact generated (`playbooks/output/odoo_live_solution_bundle_verify.json`).
+- Live marketplace MVP verification artifact generated (`playbooks/output/odoo_live_marketplace_mvp_verify.json`).
 
 ## Run
 ```powershell
@@ -55,11 +71,7 @@
 - `TRIAL_CONTACT_NAME`, `TRIAL_COMPANY_NAME`, `TRIAL_EMAIL`, `TRIAL_PHONE`: optional autofill values for trial forms.
 
 ## Current Blocker
-- Runtime reaches `https://www.odoo.com/web/login` and detects required fields `login` + `password`.
-- Without `ODOO_LOGIN_EMAIL` and `ODOO_LOGIN_PASSWORD`, autonomous flow cannot continue to provision `*.odoo.com`.
-- Diagnostics are persisted to:
-  - `playbooks/output/odoo_trial_autonomous_diagnostics.json`
-  - `playbooks/output/odoo_instance_url_error.json`
+- No active blocker registered. If Odoo UI or anti-spam flow drifts, runtime must re-enter debug/evidence mode and refresh winning paths.
 
 
 ## Architect Profile Contract (Mandatory)

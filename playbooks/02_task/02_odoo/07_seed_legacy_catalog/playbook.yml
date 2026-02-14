@@ -1,0 +1,51 @@
+steps:
+  - name: Ensure ODOO_URL exists
+    if_not: "${ODOO_URL}"
+    action: Fail
+    params:
+      text: "Missing ODOO_URL before legacy migration seed."
+
+  - name: Connect to Odoo tab
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_URL}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Navigate to Odoo instance
+    action: CDP.Navigate
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+      wait_ms: 2500
+
+  - name: Load legacy catalog seed script
+    action: FS.ReadText
+    register: js_odoo_seed_legacy_catalog
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_seed_legacy_catalog.js"
+
+  - name: Execute legacy catalog seed via in-session JSON-RPC
+    action: CDP.EvaluateJson
+    register: legacy_seed_result
+    params:
+      port: "${DEBUG_PORT}"
+      await_promise: true
+      expression: "${js_odoo_seed_legacy_catalog}"
+
+  - name: Abort if legacy catalog seed did not complete
+    if_not: "${legacy_seed_result.ok}"
+    action: Fail
+    params:
+      text: "Legacy migration seed failed: ${legacy_seed_result.error}${legacy_seed_result.reason}"
+
+  - name: Persist legacy migration checkpoint
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_legacy_migration_checkpoint.json"
+      overwrite: true
+      value:
+        ok: "${legacy_seed_result.ok}"
+        odoo_url: "${ODOO_URL}"
+        migration: "${legacy_seed_result}"

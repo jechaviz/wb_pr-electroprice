@@ -1,0 +1,81 @@
+steps:
+  - name: Ensure ODOO_URL exists
+    if_not: "${ODOO_URL}"
+    action: Fail
+    params:
+      text: "Missing ODOO_URL before marketplace MVP bootstrap."
+
+  - name: Connect to Odoo tab
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_URL}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Navigate to Odoo instance
+    action: CDP.Navigate
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+      wait_ms: 2500
+
+  - name: Load marketplace MVP bootstrap script
+    action: FS.ReadText
+    register: js_odoo_marketplace_mvp_bootstrap
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_bootstrap_marketplace_mvp.js"
+
+  - name: Execute marketplace MVP bootstrap
+    action: CDP.EvaluateJson
+    register: odoo_marketplace_mvp_result
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 300000
+      await_promise: true
+      expression: "${js_odoo_marketplace_mvp_bootstrap}"
+
+  - name: Abort if marketplace MVP bootstrap failed
+    if_not: "${odoo_marketplace_mvp_result.ok}"
+    action: Fail
+    params:
+      text: "Marketplace MVP bootstrap failed: ${odoo_marketplace_mvp_result.error}${odoo_marketplace_mvp_result.reason}"
+
+  - name: Load marketplace MVP verifier script
+    action: FS.ReadText
+    register: js_odoo_marketplace_mvp_verify
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_verify_marketplace_mvp.js"
+
+  - name: Execute marketplace MVP live verification
+    action: CDP.EvaluateJson
+    register: odoo_marketplace_mvp_verify
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 45000
+      await_promise: true
+      expression: "${js_odoo_marketplace_mvp_verify}"
+
+  - name: Abort if marketplace MVP verification failed
+    if_not: "${odoo_marketplace_mvp_verify.ok}"
+    action: Fail
+    params:
+      text: "Marketplace MVP verify failed: ${odoo_marketplace_mvp_verify.error}${odoo_marketplace_mvp_verify.reason}"
+
+  - name: Persist marketplace MVP verification artifact
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_live_marketplace_mvp_verify.json"
+      overwrite: true
+      value: "${odoo_marketplace_mvp_verify}"
+
+  - name: Persist marketplace MVP checkpoint
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_marketplace_mvp_checkpoint.json"
+      overwrite: true
+      value:
+        ok: "${odoo_marketplace_mvp_result.ok}"
+        odoo_url: "${ODOO_URL}"
+        bootstrap: "${odoo_marketplace_mvp_result}"
+        verify: "${odoo_marketplace_mvp_verify}"

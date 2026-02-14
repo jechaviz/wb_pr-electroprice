@@ -123,8 +123,14 @@ Each evolution must be registered in `FRAMEWORK_GROWTH.md`.
 - Dropshipping ops checkpoint exists: `playbooks/output/odoo_dropshipping_ops_checkpoint.json`.
 - Branding checkpoint exists: `playbooks/output/odoo_branding_checkpoint.json`.
 - Wholesaler scaffold checkpoint exists: `playbooks/output/wholesaler_integration_scaffold_checkpoint.json`.
+- Legacy catalog migration checkpoint exists: `playbooks/output/odoo_legacy_migration_checkpoint.json`.
+- Odoo solution bundle checkpoint exists: `playbooks/output/odoo_solution_bundle_checkpoint.json`.
+- Marketplace MVP checkpoint exists: `playbooks/output/odoo_marketplace_mvp_checkpoint.json`.
 - Readiness report exists: `playbooks/output/readiness_report.json`.
 - Live Odoo verification exists and passes: `playbooks/output/odoo_live_verify.json` with `ok=true`.
+- Live Odoo migration parity verification exists and passes: `playbooks/output/odoo_live_migration_verify.json` with `ok=true`.
+- Live Odoo solution bundle verification exists and passes: `playbooks/output/odoo_live_solution_bundle_verify.json` with `ok=true`.
+- Live Odoo marketplace MVP verification exists and passes: `playbooks/output/odoo_live_marketplace_mvp_verify.json` with `ok=true`.
 - Growth decisions are logged when applied.
 
 

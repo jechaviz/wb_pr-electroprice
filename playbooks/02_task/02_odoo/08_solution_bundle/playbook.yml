@@ -1,0 +1,21 @@
+steps:
+  - name: Apply Odoo server actions layer
+    playbook: "./01_server_actions/playbook.yml"
+
+  - name: Apply Odoo frontend catalog layer
+    playbook: "./02_frontend_catalog/playbook.yml"
+
+  - name: Verify Odoo solution bundle layer
+    playbook: "./03_verify/playbook.yml"
+
+  - name: Persist Odoo solution bundle checkpoint
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_solution_bundle_checkpoint.json"
+      overwrite: true
+      value:
+        ok: true
+        odoo_url: "${ODOO_URL}"
+        server_actions: "${odoo_server_actions_result}"
+        frontend_catalog: "${odoo_frontend_catalog_result}"
+        verify: "${odoo_solution_bundle_verify}"
