@@ -63,7 +63,7 @@ steps:
       playbook: "./playbooks/03_finalize/01_validate/playbook.yml"
 
     - name: Mark task completed
-      playbook: "./playbooks/03_finalize/02_complete/playbook.yml"
+      playbook: "./playbooks/03_finalize/01_complete/playbook.yml"
 
   sync:
     - action: Set
