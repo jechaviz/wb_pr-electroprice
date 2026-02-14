@@ -10,6 +10,7 @@
         - "${PROJECT_DIR}\\playbooks"
         - "${OUTPUT_DIR}"
         - "${OUTPUT_DIR}\\readiness_report.json"
+        - "${OUTPUT_DIR}\\odoo_live_verify.json"
         - "${OUTPUT_DIR}\\odoo_instance_url.txt"
         - "${OUTPUT_DIR}\\odoo_instance_alias.txt"
         - "${OUTPUT_DIR}\\odoo_trial_page_probe_before.json"

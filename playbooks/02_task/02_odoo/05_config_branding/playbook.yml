@@ -1,19 +1,11 @@
 steps:
-  - name: Ensure we have an Odoo URL in context
+  - name: Ensure ODOO_URL exists
     if_not: "${ODOO_URL}"
-    action: Note
+    action: Fail
     params:
-      text: |
-        Falta ODOO_URL en el contexto.
-        Corre primero el subplaybook de creacion de instancia.
+      text: "Missing ODOO_URL before branding configuration."
 
-  - name: Abort because ODOO_URL is missing
-    if_not: "${ODOO_URL}"
-    action: Shell.Run
-    params:
-      command: "exit 1"
-
-  - name: Connect to Odoo tab (CDP)
+  - name: Connect to Odoo tab
     action: CDP.Connect
     params:
       port: "${DEBUG_PORT}"
@@ -21,42 +13,39 @@ steps:
       target_type: page
       target_url_contains: ".odoo.com"
 
-  - name: Autonomous mode: continue without manual prompt
-    if: "${AUTONOMOUS_MODE}"
-    action: Set
+  - name: Navigate to Odoo instance
+    action: CDP.Navigate
     params:
-      name: branding_done
-      value:
-        confirmed: true
-        mode: "autonomous"
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+      wait_ms: 2000
 
-  - name: Interactive fallback: apply basic Electroprice branding
-    if_not: "${AUTONOMOUS_MODE}"
-    action: Framework.Prompt
-    register: branding_done
+  - name: Load Odoo branding configurator script
+    action: FS.ReadText
+    register: js_odoo_branding
     params:
-      title: "Electroprice / Odoo Setup"
-      icon: info
-      buttons: ok
-      text: |
-        Configura branding basico en Odoo:
-        - Company name: Electroprice
-        - Website name/logo
-        - Configura currency y pais si aplica
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_configure_branding.js"
 
-        Cuando termines, presiona OK para continuar.
-
-  - name: Abort if branding was not completed
-    if_not: "${branding_done.confirmed}"
-    action: Shell.Run
+  - name: Execute Odoo branding configuration via in-session JSON-RPC
+    action: CDP.EvaluateJson
+    register: branding_result
     params:
-      command: "exit 1"
+      port: "${DEBUG_PORT}"
+      await_promise: true
+      expression: "${js_odoo_branding}"
+
+  - name: Abort if branding did not complete
+    if_not: "${branding_result.ok}"
+    action: Fail
+    params:
+      text: "Branding configuration failed: ${branding_result.error}${branding_result.reason}"
 
   - name: Persist branding checkpoint
     action: FS.WriteJson
     params:
       path: "${OUTPUT_DIR}\\odoo_branding_checkpoint.json"
-      value:
-        ok: true
-        odoo_url: "${ODOO_URL}"
       overwrite: true
+      value:
+        ok: "${branding_result.ok}"
+        odoo_url: "${ODOO_URL}"
+        branding: "${branding_result}"

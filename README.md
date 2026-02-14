@@ -6,6 +6,7 @@
 - Category: `ecommerce/dropshipping`
 - Customer: `BU`
 - Task: `Operationalize Electroprice dropshipping baseline on Odoo`
+- Migration target: move capabilities from `C:\git\customers\bu\electroprice` into Odoo-native execution.
 
 ## Solo Mode Contract
 - WAIBA runs this project in autonomous `solo mode` by default.
@@ -30,6 +31,14 @@
 - `SDD.md`: software design.
 - `TASK_STATUS.md`: completion status.
 - `FRAMEWORK_GROWTH.md`: framework evolution log.
+
+## Odoo Migration Scope
+- Build the new Odoo-native platform by migrating useful behavior from the old stack:
+- eCommerce storefront enabled.
+- Core operations modules installed (sales/purchase/inventory/accounting/website).
+- Dropshipping module and route baseline enabled.
+- Branding baseline set to Electroprice.
+- Live baseline verification artifact generated (`playbooks/output/odoo_live_verify.json`).
 
 ## Run
 ```powershell

@@ -1,21 +1,11 @@
 steps:
-  - name: Ensure we have an Odoo URL from previous step
+  - name: Ensure ODOO_URL exists
     if_not: "${ODOO_URL}"
-    action: Note
+    action: Fail
     params:
-      text: |
-        Falta ODOO_URL en el contexto.
+      text: "Missing ODOO_URL before operations-core installation."
 
-        Corre primero:
-          playbooks/02_task/02_odoo/01_trial_create/playbook.yml
-
-  - name: Abort because ODOO_URL is missing
-    if_not: "${ODOO_URL}"
-    action: Shell.Run
-    params:
-      command: "exit 1"
-
-  - name: Connect to Odoo tab (CDP)
+  - name: Connect to Odoo tab
     action: CDP.Connect
     params:
       port: "${DEBUG_PORT}"
@@ -28,40 +18,27 @@ steps:
     params:
       port: "${DEBUG_PORT}"
       url: "${ODOO_URL}"
-      wait_ms: 3500
+      wait_ms: 2500
 
-  - name: Autonomous mode: continue without manual prompt
-    if: "${AUTONOMOUS_MODE}"
-    action: Set
+  - name: Load Odoo operations-core installer script
+    action: FS.ReadText
+    register: js_odoo_install_ops_core
     params:
-      name: ops_core_installed
-      value:
-        confirmed: true
-        mode: "autonomous"
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_install_operations_core.js"
 
-  - name: Interactive fallback: install core operations apps
-    if_not: "${AUTONOMOUS_MODE}"
-    action: Framework.Prompt
-    register: ops_core_installed
+  - name: Execute Odoo operations-core install via in-session JSON-RPC
+    action: CDP.EvaluateJson
+    register: ops_core_install_result
     params:
-      title: "Electroprice / Odoo Ops Core"
-      icon: info
-      buttons: ok
-      text: |
-        Instala los modulos base para dropshipping:
-        - Sales
-        - Purchase
-        - Inventory
-        - Invoicing/Accounting
-        - Website (si falta)
+      port: "${DEBUG_PORT}"
+      await_promise: true
+      expression: "${js_odoo_install_ops_core}"
 
-        Cuando termines, presiona OK para continuar.
-
-  - name: Abort if ops core apps were not installed
-    if_not: "${ops_core_installed.confirmed}"
-    action: Shell.Run
+  - name: Abort if operations-core install did not complete
+    if_not: "${ops_core_install_result.ok}"
+    action: Fail
     params:
-      command: "exit 1"
+      text: "Operations core install failed: ${ops_core_install_result.error}${ops_core_install_result.reason}"
 
   - name: Persist operations core checkpoint
     action: FS.WriteJson
@@ -69,11 +46,6 @@ steps:
       path: "${OUTPUT_DIR}\\odoo_operations_core_checkpoint.json"
       overwrite: true
       value:
-        ok: true
+        ok: "${ops_core_install_result.ok}"
         odoo_url: "${ODOO_URL}"
-        modules:
-          - "sales"
-          - "purchase"
-          - "inventory"
-          - "invoicing_or_accounting"
-          - "website"
+        install: "${ops_core_install_result}"

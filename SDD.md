@@ -81,6 +81,21 @@ High-level flow:
 - `playbooks/02_task/03_integration/01_wholesalers_scaffold/playbook.yml`
 - `playbooks/03_finalize/01_validate/playbook.yml`
 
+### 4.3 Old-to-New Migration Mapping
+- Legacy source: `C:\\git\\customers\\bu\\electroprice`.
+- Mapping doctrine: migrate business capability to Odoo-native primitives and retire old-path dependencies after validation.
+
+Parity mapping:
+- Product comparison and supplier visibility -> Odoo products + supplierinfo + pricelists + connector-imported prices.
+- Checkout/cart flow -> Odoo eCommerce (`website_sale`) + Sales Orders.
+- Supplier fulfillment semantics -> Odoo Purchase + Inventory + Dropshipping route.
+- Status visibility -> Odoo order/picking states and tracking fields.
+- Admin control plane -> Odoo backend views/reports instead of custom React admin pages.
+
+Validation mechanism:
+- Runtime executes live JSON-RPC verification in current authenticated Odoo session.
+- Verification artifact: `playbooks/output/odoo_live_verify.json`.
+
 ## 5. Skill Usage Strategy
 Prefer generic skills:
 - `Browser.*`

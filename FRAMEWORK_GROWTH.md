@@ -66,3 +66,8 @@ Tracks extension points discovered during project execution:
 - 2026-02-14 01:36:52 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
 - 2026-02-14 01:37:42 | category=ecommerce | note=Project initialized from modular framework template
 - 2026-02-14 01:37:45 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-14 02:06:48 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 02:07:10 | category=ecommerce | new_skill=Ecommerce.WholesalerConnector | spec_extension=connector_contract_v1 | note=Wholesaler integration scaffold and contracts added to project assets.
+- 2026-02-14 02:07:10 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-14 02:09:14 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 02:09:25 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.

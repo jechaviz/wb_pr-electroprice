@@ -66,6 +66,47 @@ steps:
     params:
       path: "${OUTPUT_DIR}\\wholesaler_integration_scaffold_checkpoint.json"
 
+  - name: Connect to Odoo tab for live baseline verification
+    if: "${has_odoo_url}"
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${odoo_url_value}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Navigate to Odoo URL for live baseline verification
+    if: "${has_odoo_url}"
+    action: CDP.Navigate
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${odoo_url_value}"
+      wait_ms: 2000
+
+  - name: Load Odoo baseline verifier script
+    if: "${has_odoo_url}"
+    action: FS.ReadText
+    register: js_odoo_verify_baseline
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_verify_baseline.js"
+
+  - name: Execute live Odoo baseline verification
+    if: "${has_odoo_url}"
+    action: CDP.EvaluateJson
+    register: odoo_live_verify
+    params:
+      port: "${DEBUG_PORT}"
+      await_promise: true
+      expression: "${js_odoo_verify_baseline}"
+
+  - name: Persist live Odoo baseline verification artifact
+    if: "${has_odoo_url}"
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_live_verify.json"
+      overwrite: true
+      value: "${odoo_live_verify}"
+
   - name: Build readiness report
     action: FS.WriteJson
     params:
@@ -89,6 +130,11 @@ steps:
           dropshipping_ops_checkpoint: "${has_dropship_checkpoint}"
           branding_checkpoint: "${has_branding_checkpoint}"
           wholesaler_scaffold_checkpoint: "${has_wholesaler_scaffold}"
+          odoo_live_verify_ok: "${odoo_live_verify.ok}"
+          odoo_live_verify_missing_modules: "${odoo_live_verify.missing_modules}"
+          odoo_live_verify_company_brand_ok: "${odoo_live_verify.company_brand_ok}"
+          odoo_live_verify_website_brand_ok: "${odoo_live_verify.website_brand_ok}"
+          odoo_live_verify_has_drop_routes: "${odoo_live_verify.has_drop_routes}"
 
   - name: Abort if repo sync artifact is missing
     if_not: "${has_repo_sync}"
@@ -140,6 +186,12 @@ steps:
 
   - name: Abort if wholesaler scaffold checkpoint is missing
     if_not: "${has_wholesaler_scaffold}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if live Odoo verification failed
+    if_not: "${odoo_live_verify.ok}"
     action: Shell.Run
     params:
       command: "exit 1"

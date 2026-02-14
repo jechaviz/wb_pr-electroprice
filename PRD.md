@@ -84,6 +84,17 @@ Clone electroprice repo, create Odoo Enterprise (eCommerce), then customize for 
 - Record supplier payable (pay wholesaler)
 - Track margin per order
 
+## 5.4 Migration Requirement (Old -> New)
+- Source reference: `C:\\git\\customers\\bu\\electroprice`.
+- Goal: migrate business capability from that repository into Odoo as the new primary platform.
+- Minimum parity surface to operationalize in Odoo:
+- Multi-supplier catalog aggregation and price comparison semantics.
+- Electronics storefront baseline with checkout flow.
+- Order lifecycle visibility (customer order, supplier fulfillment, inbound/outbound statuses).
+- Admin/operations visibility for pricing, stock and order execution.
+- Language/currency-ready storefront behavior as Odoo configuration policy.
+- Rule: parity is a temporary safety phase only; once new Odoo flow is validated, prune old/fallback paths.
+
 ## 6. Framework Growth Requirements
 During delivery, framework can evolve with:
 - New root skills.
@@ -113,6 +124,7 @@ Each evolution must be registered in `FRAMEWORK_GROWTH.md`.
 - Branding checkpoint exists: `playbooks/output/odoo_branding_checkpoint.json`.
 - Wholesaler scaffold checkpoint exists: `playbooks/output/wholesaler_integration_scaffold_checkpoint.json`.
 - Readiness report exists: `playbooks/output/readiness_report.json`.
+- Live Odoo verification exists and passes: `playbooks/output/odoo_live_verify.json` with `ok=true`.
 - Growth decisions are logged when applied.
 
 

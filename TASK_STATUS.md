@@ -2,7 +2,7 @@
 
 - status: completed
 - task: Operationalize Electroprice dropshipping baseline on Odoo
-- completed_at: 2026-02-14 01:37:46
+- completed_at: 2026-02-14 02:09:31
 
 ## Summary
 
@@ -14,6 +14,7 @@ Sync electroprice repo, bootstrap Odoo, configure eCommerce+operations+dropshipp
 - C:\git\wb_pr\projects\BU\electroprice\playbooks
 - C:\git\wb_pr\projects\BU\electroprice\playbooks\output
 - C:\git\wb_pr\projects\BU\electroprice\playbooks\output\readiness_report.json
+- C:\git\wb_pr\projects\BU\electroprice\playbooks\output\odoo_live_verify.json
 - C:\git\wb_pr\projects\BU\electroprice\playbooks\output\odoo_instance_url.txt
 - C:\git\wb_pr\projects\BU\electroprice\playbooks\output\odoo_instance_alias.txt
 - C:\git\wb_pr\projects\BU\electroprice\playbooks\output\odoo_trial_page_probe_before.json
