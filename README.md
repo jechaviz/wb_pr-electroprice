@@ -51,6 +51,7 @@
   - Customer portal pages (`/my/electroprice-dashboard`, `/track-order`)
   - Logistics workflow params for dropship -> rebrand -> redispatch
   - Connector parameter registry for API orchestration
+  - UI interstitial guard (Helium-native, no JS inline): resolves `website/configurator` and probes `Activación pendiente`
 - Live baseline verification artifact generated (`playbooks/output/odoo_live_verify.json`).
 - Live migration parity verification artifact generated (`playbooks/output/odoo_live_migration_verify.json`).
 - Live solution bundle verification artifact generated (`playbooks/output/odoo_live_solution_bundle_verify.json`).
