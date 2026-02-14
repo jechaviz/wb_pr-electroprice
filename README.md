@@ -14,6 +14,9 @@
 - Runtime emits progress notifications; it should not block on manual confirmation popups.
 - During execution, WAIBA can create/refine subplaybooks and reusable skills to finish the task.
 - User can interrupt and redirect at any moment.
+- Lifecycle marking:
+  - `once` steps (create/configure/migrate) are persisted in `playbooks/output/step_once.yml` after verification.
+  - `routine` steps (session/health/validation) remain always runnable.
 
 ## Autonomy Doctrine (Mandatory)
 - Doctrine source of truth: `AUTONOMY.md` (required artifact).

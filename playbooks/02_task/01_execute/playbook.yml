@@ -142,6 +142,8 @@ steps:
 
   - name: Create Odoo Enterprise instance (autonomous)
     if_not: "${ODOO_URL}"
+    once: true
+    once_key: "odoo.trial.create"
     playbook: "../02_odoo/01_trial_create/playbook.yml"
 
   - name: Ensure authenticated Odoo session
@@ -155,6 +157,8 @@ steps:
 
   - name: Install eCommerce module (interactive)
     if_not: "${has_ecommerce_checkpoint}"
+    once: true
+    once_key: "odoo.apps.install_ecommerce"
     playbook: "../02_odoo/03_apps_install_ecommerce/playbook.yml"
 
   - name: Check operations core checkpoint
@@ -165,6 +169,8 @@ steps:
 
   - name: Install core operations modules (interactive)
     if_not: "${has_ops_core_checkpoint}"
+    once: true
+    once_key: "odoo.apps.install_operations_core"
     playbook: "../02_odoo/04_apps_install_operations_core/playbook.yml"
 
   - name: Check branding checkpoint
@@ -175,6 +181,8 @@ steps:
 
   - name: Apply basic branding (interactive)
     if_not: "${has_branding_checkpoint}"
+    once: true
+    once_key: "odoo.config.branding"
     playbook: "../02_odoo/05_config_branding/playbook.yml"
 
   - name: Check dropshipping checkpoint
@@ -185,6 +193,8 @@ steps:
 
   - name: Configure dropshipping operations (interactive)
     if_not: "${has_dropship_checkpoint}"
+    once: true
+    once_key: "odoo.config.dropshipping_ops"
     playbook: "../02_odoo/06_config_dropshipping_ops/playbook.yml"
 
   - name: Check wholesaler scaffold checkpoint
@@ -195,6 +205,8 @@ steps:
 
   - name: Scaffold wholesaler integration assets
     if_not: "${has_wholesaler_scaffold}"
+    once: true
+    once_key: "odoo.integration.wholesalers_scaffold"
     playbook: "../03_integration/01_wholesalers_scaffold/playbook.yml"
 
   - name: Check legacy migration checkpoint
@@ -205,6 +217,8 @@ steps:
 
   - name: Seed legacy Electroprice catalog into Odoo
     if_not: "${has_legacy_migration_checkpoint}"
+    once: true
+    once_key: "odoo.migration.seed_legacy_catalog"
     playbook: "../02_odoo/07_seed_legacy_catalog/playbook.yml"
 
   - name: Check Odoo solution bundle checkpoint
@@ -215,6 +229,8 @@ steps:
 
   - name: Apply Odoo solution bundle (config + server actions + frontend)
     if_not: "${has_odoo_solution_bundle_checkpoint}"
+    once: true
+    once_key: "odoo.solution_bundle.apply"
     playbook: "../02_odoo/08_solution_bundle/playbook.yml"
 
   - name: Check marketplace MVP checkpoint
@@ -225,6 +241,8 @@ steps:
 
   - name: Apply marketplace MVP layer (global suppliers + channels + shipping + pricing)
     if_not: "${has_marketplace_mvp_checkpoint}"
+    once: true
+    once_key: "odoo.marketplace_mvp.apply"
     playbook: "../02_odoo/09_marketplace_mvp/playbook.yml"
 
   - name: Track framework growth: Electroprice dropshipping baseline
