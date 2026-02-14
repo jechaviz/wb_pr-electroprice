@@ -47,19 +47,7 @@ steps:
       - "Shop"
       - "Tienda"
     steps:
-      - name: Click app tile: ${loop.item}
-        action: Helium.Click
-        register: app_click
-        ignore_errors: true
-        confirm_after_wait_ms: 1200
-        params:
-          port: "${DEBUG_PORT}"
-          text: "${loop.item}"
-          implicit_wait_ms: 5000
-          retry_interval_ms: 200
-
       - name: Find app tile in-page (Ctrl+F style): ${loop.item}
-        if_not: "${app_click.ok}"
         action: Helium.FindInPage
         register: app_find
         ignore_errors: true
@@ -68,18 +56,31 @@ steps:
           port: "${DEBUG_PORT}"
           text: "${loop.item}"
           highlight_ms: 1200
+          retry_interval_ms: 0
 
       - name: Click app tile via selection point: ${loop.item}
         if: "${app_find.found}"
-        action: Helium.Click
+        action: Helium.ClickNative
         register: app_click
         ignore_errors: true
         confirm_after_wait_ms: 1200
         params:
           port: "${DEBUG_PORT}"
           element: "${app_find.point}"
-          implicit_wait_ms: 3000
+          implicit_wait_ms: 1500
           retry_interval_ms: 150
+
+      - name: Fallback click app tile by DOM search: ${loop.item}
+        if_not: "${app_click.ok}"
+        action: Helium.Click
+        register: app_click
+        ignore_errors: true
+        confirm_after_wait_ms: 1200
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${loop.item}"
+          implicit_wait_ms: 1200
+          retry_interval_ms: 200
       - break_if: "${app_click.ok}"
 
   - name: Abort if eCommerce app tile was not found
@@ -98,7 +99,31 @@ steps:
       - "Continuar"
       - "Next"
     steps:
-      - name: Click continue button: ${loop.item}
+      - name: Find continue in-page (Ctrl+F style): ${loop.item}
+        action: Helium.FindInPage
+        register: continue_find
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${loop.item}"
+          highlight_ms: 1200
+          retry_interval_ms: 0
+
+      - name: Click continue via selection point: ${loop.item}
+        if: "${continue_find.found}"
+        action: Helium.ClickNative
+        register: continue_click
+        ignore_errors: true
+        confirm_after_wait_ms: 1200
+        params:
+          port: "${DEBUG_PORT}"
+          element: "${continue_find.point}"
+          implicit_wait_ms: 1500
+          retry_interval_ms: 150
+
+      - name: Fallback click continue button by DOM search: ${loop.item}
+        if_not: "${continue_click.ok}"
         action: Helium.Click
         register: continue_click
         ignore_errors: true
@@ -108,31 +133,8 @@ steps:
           element:
             kind: button
             text: "${loop.item}"
-          implicit_wait_ms: 5000
+          implicit_wait_ms: 1500
           retry_interval_ms: 200
-
-      - name: Find continue in-page (Ctrl+F style): ${loop.item}
-        if_not: "${continue_click.ok}"
-        action: Helium.FindInPage
-        register: continue_find
-        ignore_errors: true
-        confirm_progress: false
-        params:
-          port: "${DEBUG_PORT}"
-          text: "${loop.item}"
-          highlight_ms: 1200
-
-      - name: Click continue via selection point: ${loop.item}
-        if: "${continue_find.found}"
-        action: Helium.Click
-        register: continue_click
-        ignore_errors: true
-        confirm_after_wait_ms: 1200
-        params:
-          port: "${DEBUG_PORT}"
-          element: "${continue_find.point}"
-          implicit_wait_ms: 3000
-          retry_interval_ms: 150
       - break_if: "${continue_click.ok}"
 
   - name: Abort if Continue button was not found
@@ -199,7 +201,7 @@ steps:
         if_not: "${ODOO_LOGIN_EMAIL}"
         confirm_progress: false
         steps:
-          - action: Helium.Click
+          - action: Helium.ClickNative
             ignore_errors: true
             confirm_progress: false
             params:
@@ -237,7 +239,7 @@ steps:
         if_not: "${ODOO_LOGIN_PASSWORD}"
         confirm_progress: false
         steps:
-          - action: Helium.Click
+          - action: Helium.ClickNative
             ignore_errors: true
             confirm_progress: false
             params:
@@ -287,7 +289,7 @@ steps:
                 selector: "input[type='email'], input[name*='email' i], input[autocomplete='email']"
 
           - name: Focus trial email field
-            action: Helium.Click
+            action: Helium.ClickNative
             confirm_progress: false
             params:
               port: "${DEBUG_PORT}"
