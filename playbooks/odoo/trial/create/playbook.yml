@@ -1,4 +1,4 @@
-steps:
+﻿steps:
   - name: Start Edge and open Odoo trial
     action: Helium.StartEdge
     params:
@@ -40,8 +40,35 @@ steps:
           retry_interval_ms: 150
       - break_if: "${consent_click.ok}"
 
-  - name: Select app tile (eCommerce)
+  - name: Select app tile (eCommerce) deterministically
+    action: Helium.Click
+    register: app_click
+    ignore_errors: true
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "label[for='app_website_sale']"
+      implicit_wait_ms: 6000
+      retry_interval_ms: 150
+
+  - name: Verify eCommerce app selected
+    if: "${app_click.ok}"
+    action: Helium.Exists
+    register: app_selected_state
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "input#app_website_sale:checked"
+        visible: false
+
+  - name: Fallback app selection by localized text
+    if_not: "${app_selected_state.exists}"
     loop:
+      - "Comercio electronico"
       - "Comercio electrónico"
       - "eCommerce"
       - "Ecommerce"
@@ -58,7 +85,7 @@ steps:
         params:
           port: "${DEBUG_PORT}"
           text: "${loop.item}"
-          highlight_ms: 1200
+          highlight_ms: 900
           retry_interval_ms: 0
 
       - name: Click app tile via selection point: ${loop.item}
@@ -66,7 +93,7 @@ steps:
         action: Helium.ClickNative
         register: app_click
         ignore_errors: true
-        confirm_after_wait_ms: 1200
+        confirm_progress: false
         params:
           port: "${DEBUG_PORT}"
           element: "${app_find.point}"
@@ -78,16 +105,28 @@ steps:
         action: Helium.Click
         register: app_click
         ignore_errors: true
-        confirm_after_wait_ms: 1200
+        confirm_progress: false
         params:
           port: "${DEBUG_PORT}"
           text: "${loop.item}"
           implicit_wait_ms: 1200
           retry_interval_ms: 200
-      - break_if: "${app_click.ok}"
 
-  - name: Abort if eCommerce app tile was not found
-    if_not: "${app_click.ok}"
+      - name: Verify app selection after fallback click
+        if: "${app_click.ok}"
+        action: Helium.Exists
+        register: app_selected_state
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element:
+            kind: s
+            selector: "input#app_website_sale:checked"
+            visible: false
+      - break_if: "${app_selected_state.exists}"
+
+  - name: Abort if eCommerce app tile was not selected
+    if_not: "${app_selected_state.exists}"
     action: Fail
     params:
       text: |
@@ -96,89 +135,95 @@ steps:
         Try running with env=debug to capture evidence, or check:
         - ${OUTPUT_DIR}\\debug_evidence
 
-  - name: Click Continue (after app selection)
+  - name: Detect visible Continue button
+    action: Helium.Exists
+    register: continue_button_state
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "button.openerp_enterprise_validate_trial"
+
+  - name: Click Continue (deterministic selector)
+    if: "${continue_button_state.exists}"
+    action: Helium.Click
+    register: continue_click
+    ignore_errors: true
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      element:
+        kind: s
+        selector: "button.openerp_enterprise_validate_trial"
+      implicit_wait_ms: 3000
+      retry_interval_ms: 150
+
+  - name: Fallback Continue click by localized text
+    if_not: "${continue_click.ok}"
+    loop:
+      - "Continue"
+      - "Continuar"
+      - "Next"
     steps:
-      - name: Click continue primary selector (deterministic)
-        action: Helium.ClickNative
+      - name: Click continue button by button locator: ${loop.item}
+        action: Helium.Click
         register: continue_click
         ignore_errors: true
-        confirm_after_wait_ms: 1000
+        confirm_progress: false
         params:
           port: "${DEBUG_PORT}"
           element:
-            kind: s
-            selector: "button.openerp_enterprise_validate_trial, button.btn.btn-lg.btn-primary.openerp_enterprise_validate_trial"
+            kind: button
+            text: "${loop.item}"
           implicit_wait_ms: 1500
           retry_interval_ms: 150
 
-      - if_not: "${continue_click.ok}"
-        loop:
-          - "Continue"
-          - "Continuar"
-          - "Next"
-        steps:
-          - name: Click continue button by native button locator: ${loop.item}
-            action: Helium.ClickNative
-            register: continue_click
-            ignore_errors: true
-            confirm_after_wait_ms: 1000
-            params:
-              port: "${DEBUG_PORT}"
-              element:
-                kind: button
-                text: "${loop.item}"
-              implicit_wait_ms: 1200
-              retry_interval_ms: 150
+      - name: Find continue in-page (Ctrl+F style): ${loop.item}
+        if_not: "${continue_click.ok}"
+        action: Helium.FindInPage
+        register: continue_find
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text: "${loop.item}"
+          highlight_ms: 900
+          retry_interval_ms: 0
 
-          - name: Find continue in-page (Ctrl+F style): ${loop.item}
-            if_not: "${continue_click.ok}"
-            action: Helium.FindInPage
-            register: continue_find
-            ignore_errors: true
-            confirm_progress: false
-            params:
-              port: "${DEBUG_PORT}"
-              text: "${loop.item}"
-              highlight_ms: 1200
-              retry_interval_ms: 0
+      - name: Click continue via selection point: ${loop.item}
+        if: "${continue_find.found}"
+        action: Helium.ClickNative
+        register: continue_click
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element: "${continue_find.point}"
+          implicit_wait_ms: 1500
+          retry_interval_ms: 150
+      - break_if: "${continue_click.ok}"
 
-          - name: Click continue via selection point: ${loop.item}
-            if: "${continue_find.found}"
-            action: Helium.ClickNative
-            register: continue_click
-            ignore_errors: true
-            confirm_after_wait_ms: 1200
-            params:
-              port: "${DEBUG_PORT}"
-              element: "${continue_find.point}"
-              implicit_wait_ms: 1500
-              retry_interval_ms: 150
-
-          - name: Fallback click continue button by DOM search: ${loop.item}
-            if_not: "${continue_click.ok}"
-            action: Helium.Click
-            register: continue_click
-            ignore_errors: true
-            confirm_after_wait_ms: 1200
-            params:
-              port: "${DEBUG_PORT}"
-              element:
-                kind: button
-                text: "${loop.item}"
-              implicit_wait_ms: 1500
-              retry_interval_ms: 200
-          - break_if: "${continue_click.ok}"
-
-  - name: Abort if Continue button was not found
+  - name: Abort if Continue button could not be clicked
     if_not: "${continue_click.ok}"
     action: Fail
     params:
       text: |
-        Could not click the Continue button after selecting the app.
+        Could not click Continue after selecting eCommerce app.
 
         Evidence:
         - ${OUTPUT_DIR}\\debug_evidence
 
+  - name: Confirm trial step moved to auth/form
+    action: Helium.WaitUntil
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_secs: 20
+      interval_ms: 250
+      exists:
+        kind: s
+        selector: "input#email, input[id*='email' i], input[type='email'], input[name='login'], input[autocomplete='username'], input[type='password']"
   - name: Check if we are on an Odoo instance already
     action: Helium.GetUrlMeta
     register: odoo_url_meta_pre
@@ -376,6 +421,49 @@ steps:
                   name: TRIAL_EMAIL
                   value: "${trial_email_val.value}"
 
+          - name: Fallback TRIAL_EMAIL from ODOO_LOGIN_EMAIL
+            if_not: "${TRIAL_EMAIL}"
+            if: "${ODOO_LOGIN_EMAIL}"
+            action: Set
+            confirm_progress: false
+            params:
+              name: TRIAL_EMAIL
+              value: "${ODOO_LOGIN_EMAIL}"
+
+          - name: Fallback TRIAL_EMAIL from project git config
+            if_not: "${TRIAL_EMAIL}"
+            action: Shell.Run
+            register: trial_email_from_git
+            ignore_errors: true
+            confirm_progress: false
+            params:
+              command: "git config user.email"
+              workdir: "${ROOT_PLAYBOOK_DIR}"
+              timeout_ms: 5000
+              allow_fail: true
+
+          - name: Export TRIAL_EMAIL from project git config output
+            if_not: "${TRIAL_EMAIL}"
+            if: "${trial_email_from_git.stdout}"
+            action: Set
+            confirm_progress: false
+            params:
+              name: TRIAL_EMAIL
+              value: "${trial_email_from_git.stdout}"
+
+          - name: Ensure trial email field is filled
+            if: "${TRIAL_EMAIL}"
+            action: Helium.Write
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              text: "${TRIAL_EMAIL}"
+              into:
+                kind: s
+                selector: "input#email, input[id*='email' i], input[type='email'], input[name*='email' i], input[autocomplete='email'], input[placeholder*='mail' i]"
+              implicit_wait_ms: 2500
+              retry_interval_ms: 150
+
           - name: Abort if trial email is still missing
             if_not: "${TRIAL_EMAIL}"
             action: Fail
@@ -396,6 +484,20 @@ steps:
             params:
               port: "${DEBUG_PORT}"
               text: "${TRIAL_PHONE}"
+              into:
+                kind: s
+                selector: "input[type='tel'], input[name*='phone' i], input[autocomplete='tel']"
+              implicit_wait_ms: 1500
+              retry_interval_ms: 150
+
+          - name: Fill trial phone fallback
+            if_not: "${TRIAL_PHONE}"
+            action: Helium.Write
+            ignore_errors: true
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              text: "+525555555555"
               into:
                 kind: s
                 selector: "input[type='tel'], input[name*='phone' i], input[autocomplete='tel']"
@@ -430,8 +532,24 @@ steps:
               implicit_wait_ms: 1500
               retry_interval_ms: 150
 
-          - name: Submit trial form (Continue/Create)
+          - name: Submit trial form (deterministic primary selector)
+            action: Helium.Click
+            register: trial_submit_click
+            ignore_errors: true
+            confirm_progress: false
+            params:
+              port: "${DEBUG_PORT}"
+              element:
+                kind: s
+                selector: "button.btn.btn-lg.btn-primary"
+              implicit_wait_ms: 4000
+              retry_interval_ms: 200
+
+          - name: Submit trial form (localized fallbacks)
+            if_not: "${trial_submit_click.ok}"
             loop:
+              - "Comienza ahora"
+              - "Start now"
               - "Continue"
               - "Create"
               - "Start"
@@ -444,7 +562,7 @@ steps:
                 action: Helium.Click
                 register: trial_submit_click
                 ignore_errors: true
-                confirm_after_wait_ms: 1200
+                confirm_progress: false
                 params:
                   port: "${DEBUG_PORT}"
                   element:
@@ -453,6 +571,16 @@ steps:
                   implicit_wait_ms: 4000
                   retry_interval_ms: 200
               - break_if: "${trial_submit_click.ok}"
+
+          - name: Abort if trial form submit button was not clicked
+            if_not: "${trial_submit_click.ok}"
+            action: Fail
+            params:
+              text: |
+                Could not click the trial form submit button.
+
+                Evidence:
+                - ${OUTPUT_DIR}\\debug_evidence
 
   - name: Wait for provisioned Odoo instance URL
     if_not: "${odoo_url_meta_pre.is_instance}"
