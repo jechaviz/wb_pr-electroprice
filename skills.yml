@@ -5,11 +5,26 @@
     - core
   skills: []
 policy: 
+  architect_profile_manifest: ARCHITECT_PROFILE.md
+  architect_profile_required: 1
+  autonomy_contract_required: 1
+  autonomy_manifest: AUTONOMY.md
+  continuous_self_optimization: 1
+  deep_mechanism_analysis_required: 1
+  innovation_hacks_required: 1
+  learned_candidate_replay_only: 1
+  max_file_lines: 600
+  objective_driven: 1
+  perception_first: 1
+  playbook_folder_naming: NN_topic/NN_subtopic
   reusable_code_in_project: 0
   reusable_code_location: %USERPROFILE%\\.waiba\\skills
+  simplicity_optimization_required: 1
+  strict_objective_accuracy: 1
+  ui_change_detection_required: 1
 project: 
   category: ecommerce
   name: Electroprice
-  skill_path: Electroprice
+  skill_path: Ecommerce.Electroprice
   subcategory: dropshipping
 version: 1

@@ -40,6 +40,20 @@
 - Runtime can self-extend with new subplaybooks/skills/spec updates to complete delivery.
 - User governs strategy by interruption/redirection, not by per-step approval popups.
 
+## Perception -> Decision -> Action Architecture
+- Perception stack:
+  - DOM/state inspection (fast path)
+  - UI-state probes (focus/hover/interactable)
+  - OCR fallback with bounding boxes
+  - Vision reasoning fallback for ambiguous screens
+- Decision policy:
+  - rank candidate actions by expected objective progress, reliability, risk, and time cost
+  - execute best candidate first, then fallback candidates if unconfirmed
+- Verification policy:
+  - success = verified postcondition delta (URL/DOM/form state/navigation), not only return flags
+- Learning policy:
+  - persist successful trajectories/failures and promote stable patterns to reusable skills.
+
 ## 4.1 Target System Architecture (Electroprice)
 The intended end-state is a dropshipping ecommerce system with Odoo as the operational core.
 
@@ -60,12 +74,12 @@ High-level flow:
 - Warehouse rebranding -> Odoo internal operation -> ship to customer
 
 ### 4.2 Implemented Playbook Modules
-- `playbooks/odoo/apps/install_ecommerce/playbook.yml`
-- `playbooks/odoo/apps/install_operations_core/playbook.yml`
-- `playbooks/odoo/config/branding/playbook.yml`
-- `playbooks/odoo/config/dropshipping_ops/playbook.yml`
-- `playbooks/integration/wholesalers/scaffold/playbook.yml`
-- `playbooks/finalize/validate/playbook.yml`
+- `playbooks/02_task/02_odoo/03_apps_install_ecommerce/playbook.yml`
+- `playbooks/02_task/02_odoo/04_apps_install_operations_core/playbook.yml`
+- `playbooks/02_task/02_odoo/05_config_branding/playbook.yml`
+- `playbooks/02_task/02_odoo/06_config_dropshipping_ops/playbook.yml`
+- `playbooks/02_task/03_integration/01_wholesalers_scaffold/playbook.yml`
+- `playbooks/03_finalize/01_validate/playbook.yml`
 
 ## 5. Skill Usage Strategy
 Prefer generic skills:
@@ -117,3 +131,18 @@ Record each change in `FRAMEWORK_GROWTH.md`.
 - task: Bootstrap Electroprice in Odoo Enterprise
 - status: completed
 - completed_at: 2026-02-12 18:33:58
+
+
+## Architect-Level Runtime Constraints (Mandatory)
+
+- Runtime must enforce strict learned-candidate replay before trying broader fallbacks.
+- Runtime must auto-record evidence and fail-fast on learned-path regressions (UI changed).
+- Policy and execution behavior from ARCHITECT_PROFILE.md are mandatory and non-ignorable.
+- Decision engine must include simplification and deep-internals heuristics before escalating to expensive vision/OCR paths.
+
+
+## Structural Decomposition Policy (Mandatory)
+
+- Hard decomposition threshold: any file > 600 lines triggers decomposition.
+- Apply OOP/AOP/SoC/SOLID/DRY and design patterns to lower maintenance and time complexity.
+- Prefer one-class-per-file (except thin facades) and explicit module boundaries.

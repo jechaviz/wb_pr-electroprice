@@ -44,6 +44,13 @@ Clone electroprice repo, create Odoo Enterprise (eCommerce), then customize for 
 - Runtime can self-enrich (new subplaybooks, skills, and spec growth) to finish the assigned task.
 - User can interrupt and redirect at any time.
 
+## Autonomous Improvement Contract
+- Objective-first execution with measurable progress checks at each critical transition.
+- Perception-first policy: observe current state before selecting any action.
+- Continuous optimization policy: each run should improve speed/reliability for the next run.
+- Exactness policy: completion claims require objective artifacts, not inferred success.
+- Reuse policy: stable patterns discovered during delivery must be captured as reusable skills/modules.
+
 ## 5.1 Electroprice Domain Requirements (Dropshipping)
 - Storefront must sell electronics sourced from multiple wholesalers (dropshipping).
 - System must keep catalog and pricing synced from wholesalers (API feeds).
@@ -114,3 +121,18 @@ Each evolution must be registered in `FRAMEWORK_GROWTH.md`.
 - task: Bootstrap Electroprice in Odoo Enterprise
 - status: completed
 - completed_at: 2026-02-12 18:33:58
+
+
+## Architect Intelligence Baseline (Mandatory)
+
+- Non-negotiable baseline: act at architect-level rigor (design quality, reproducibility, pruning discipline).
+- Use verified winning paths; if they fail, classify as UI drift and resolve via perception-debug cycle.
+- Do not keep broad fallback permutations after one candidate is validated.
+- Prefer out-of-the-box simplification hacks (for example find-in-page homing) when they reduce latency and uncertainty.
+
+
+## Refactoring Trigger Policy (Mandatory)
+
+- Trigger: file length > 600 lines => mandatory refactor before declaring completion.
+- Refactor strategy: split by responsibility/class, isolate cross-cutting concerns, reduce duplication.
+- For playbooks, replace giant flows with nested numbered modules.

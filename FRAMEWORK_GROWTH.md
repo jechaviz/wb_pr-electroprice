@@ -47,3 +47,18 @@ Tracks extension points discovered during project execution:
 - 2026-02-13 13:15:46 | category=ecommerce | note=Project initialized from modular framework template
 - 2026-02-13 13:17:19 | category=ecommerce | note=Project initialized from modular framework template
 - 2026-02-13 13:21:32 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-13 23:59:48 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 00:02:09 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 00:03:12 | category=ecommerce | new_skill=Ecommerce.WholesalerConnector | spec_extension=connector_contract_v1 | note=Wholesaler integration scaffold and contracts added to project assets.
+- 2026-02-14 00:03:12 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-14 00:04:17 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 00:04:20 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-14 00:45:06 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 00:45:11 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-14 01:03:12 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 01:03:16 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-14 01:04:29 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 01:04:33 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
+- 2026-02-14 01:33:04 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 01:34:18 | category=ecommerce | note=Project initialized from modular framework template
+- 2026-02-14 01:34:23 | category=ecommerce | note=Electroprice: repo sync + Odoo bootstrap + operations modules + dropshipping config + wholesaler scaffold.
