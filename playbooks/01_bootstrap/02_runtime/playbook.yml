@@ -4,6 +4,26 @@ steps:
     params:
       path: "${OUTPUT_DIR}"
 
+  - name: Check if project secrets.yml exists
+    action: FS.Exists
+    register: has_project_secrets_yml
+    params:
+      path: "${PROJECT_DIR}\\secrets.yml"
+
+  - name: Auto-create project secrets.yml when missing
+    if_not: "${has_project_secrets_yml}"
+    action: FS.WriteText
+    params:
+      path: "${PROJECT_DIR}\\secrets.yml"
+      overwrite: false
+      text: |
+        # Project-local secrets (not committed)
+        # Override only what this project needs.
+        odoo.login_email: ""
+        odoo.login_password: ""
+        odoo.trial_email: ""
+        odoo.trial_phone: ""
+
   - name: Apply WAIBA policy roots and global skill registry
     action: Framework.Policy.Apply
     register: waiba_policy

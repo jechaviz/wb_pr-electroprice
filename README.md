@@ -34,6 +34,7 @@
 - `SDD.md`: software design.
 - `TASK_STATUS.md`: completion status.
 - `FRAMEWORK_GROWTH.md`: framework evolution log.
+- `secrets.yml`: project-local secrets (auto-created on bootstrap if missing).
 
 ## Odoo Migration Scope
 - Build the new Odoo-native platform by migrating useful behavior from the old stack:
@@ -66,6 +67,14 @@
   C:\Users\jecha\.waiba\src\automation\waiba.ahk `
   run C:\git\wb_pr\projects\BU\electroprice\playbook.yaml prod
 ```
+
+## Secrets
+- `secrets.yml` is auto-created in project root on bootstrap if it does not exist.
+- Fill only required keys for autonomous auth/trial:
+  - `odoo.login_email`
+  - `odoo.login_password`
+  - `odoo.trial_email`
+  - `odoo.trial_phone`
 
 ## Autonomous Trial Variables
 - `AUTONOMOUS_MODE`: `true` to avoid blocking prompts.

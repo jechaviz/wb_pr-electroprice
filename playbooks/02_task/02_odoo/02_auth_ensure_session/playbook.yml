@@ -67,9 +67,39 @@
         kind: s
         selector: "form[action*='/web/login'], input[name='login'], input[type='password']"
 
+  - name: Initialize auth tracking defaults
+    action: Set
+    confirm_progress: false
+    params:
+      name: ODOO_AUTH_METHOD
+      value: "unknown"
+
+  - name: Initialize auth email tracking
+    action: Set
+    confirm_progress: false
+    params:
+      name: ODOO_AUTH_EMAIL_USED
+      value: ""
+
   - name: Login with configured credentials
     if: "${odoo_login_visible.exists}"
     steps:
+      - name: Track auth method as explicit credentials
+        if: "${ODOO_LOGIN_EMAIL}"
+        action: Set
+        confirm_progress: false
+        params:
+          name: ODOO_AUTH_METHOD
+          value: "credentials"
+
+      - name: Track login email from secrets
+        if: "${ODOO_LOGIN_EMAIL}"
+        action: Set
+        confirm_progress: false
+        params:
+          name: ODOO_AUTH_EMAIL_USED
+          value: "${ODOO_LOGIN_EMAIL}"
+
       - name: Fill login email (from secrets)
         if: "${ODOO_LOGIN_EMAIL}"
         action: Helium.Write
@@ -157,6 +187,13 @@
     if: "${odoo_login_visible.exists}"
     if_not: "${ODOO_LOGIN_EMAIL}"
     steps:
+      - name: Track auth method as browser autofill
+        action: Set
+        confirm_progress: false
+        params:
+          name: ODOO_AUTH_METHOD
+          value: "browser_autofill"
+
       - name: Focus login field
         action: Helium.ClickNative
         ignore_errors: true
@@ -182,6 +219,25 @@
         params:
           port: "${DEBUG_PORT}"
           key: "ENTER"
+
+      - name: Read selected autofill login value
+        action: Helium.GetValue
+        register: odoo_autofill_login_value
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          element:
+            kind: s
+            selector: "input[name='login'], input[type='email'], input[autocomplete='username'], input[autocomplete='email']"
+
+      - name: Track autofill login value
+        if: "${odoo_autofill_login_value.value}"
+        action: Set
+        confirm_progress: false
+        params:
+          name: ODOO_AUTH_EMAIL_USED
+          value: "${odoo_autofill_login_value.value}"
 
       - name: Focus password field
         action: Helium.ClickNative
@@ -238,6 +294,80 @@
       element:
         kind: s
         selector: "form[action*='/web/login'], input[name='login'], input[type='password']"
+
+  - name: Track auth method as existing session
+    if_not: "${odoo_login_visible.exists}"
+    action: Set
+    confirm_progress: false
+    params:
+      name: ODOO_AUTH_METHOD
+      value: "existing_session"
+
+  - name: Probe authenticated identity from Odoo web client
+    action: CDP.EvaluateJson
+    register: odoo_session_identity
+    ignore_errors: true
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 12000
+      expression: "(() => { try { const s = (window.odoo && (window.odoo.__session_info__ || window.odoo.session_info)) || null; const uid = Number((s && (s.uid || s.user_id)) || 0); const login = (s && (s.username || s.login || s.user_login || '')) || ''; const db = (s && (s.db || '')) || ''; const name = (s && (s.name || '')) || ''; return { ok: uid > 0, uid, login, db, name, source: s ? 'window.odoo.session_info' : 'missing' }; } catch (e) { return { ok: false, error: String(e) }; } })()"
+
+  - name: Probe authenticated identity via Odoo session RPC
+    action: CDP.EvaluateJson
+    register: odoo_session_identity_rpc
+    ignore_errors: true
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 15000
+      await_promise: true
+      expression: "(async () => { try { const payload = { jsonrpc: '2.0', method: 'call', params: {} }; const res = await fetch('/web/session/get_session_info', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const text = await res.text(); let body = null; try { body = JSON.parse(text); } catch (_e) { return { ok: false, source: 'rpc.get_session_info', status: res.status, error: 'non_json', body_preview: text.slice(0, 200) }; } const info = body && body.result ? body.result : {}; const uid = Number(info.uid || (Array.isArray(info.user_id) ? info.user_id[0] : info.user_id) || 0); const login = (info.username || info.login || info.user_login || ''); const db = (info.db || ''); const name = (info.name || ''); return { ok: uid > 0 || !!login, uid, login, db, name, source: 'rpc.get_session_info', status: res.status }; } catch (e) { return { ok: false, source: 'rpc.get_session_info', error: String(e) }; } })()"
+
+  - name: Backfill auth email from active session identity
+    if_not: "${ODOO_AUTH_EMAIL_USED}"
+    if: "${odoo_session_identity.login}"
+    action: Set
+    confirm_progress: false
+    params:
+      name: ODOO_AUTH_EMAIL_USED
+      value: "${odoo_session_identity.login}"
+
+  - name: Backfill auth email from session RPC identity
+    if_not: "${ODOO_AUTH_EMAIL_USED}"
+    if: "${odoo_session_identity_rpc.login}"
+    action: Set
+    confirm_progress: false
+    params:
+      name: ODOO_AUTH_EMAIL_USED
+      value: "${odoo_session_identity_rpc.login}"
+
+  - name: Persist auth email trace
+    if: "${ODOO_AUTH_EMAIL_USED}"
+    action: FS.WriteText
+    confirm_progress: false
+    params:
+      path: "${OUTPUT_DIR}\\odoo_auth_email_used.txt"
+      text: "${ODOO_AUTH_EMAIL_USED}"
+      overwrite: true
+
+  - name: Persist auth method trace
+    action: FS.WriteText
+    confirm_progress: false
+    params:
+      path: "${OUTPUT_DIR}\\odoo_auth_method.txt"
+      text: "${ODOO_AUTH_METHOD}"
+      overwrite: true
+
+  - name: Persist auth identity probe
+    action: FS.WriteJson
+    confirm_progress: false
+    params:
+      path: "${OUTPUT_DIR}\\odoo_auth_identity.json"
+      overwrite: true
+      value:
+        ui_probe: "${odoo_session_identity}"
+        rpc_probe: "${odoo_session_identity_rpc}"
 
   - name: Abort if session is still unauthenticated
     if: "${odoo_login_visible.exists}"
@@ -303,6 +433,10 @@
       value:
         ok: true
         odoo_url: "${ODOO_URL}"
+        auth_method: "${ODOO_AUTH_METHOD}"
+        auth_email_used: "${ODOO_AUTH_EMAIL_USED}"
+        auth_identity: "${odoo_session_identity}"
+        auth_identity_rpc: "${odoo_session_identity_rpc}"
         website_configurator_active: "${odoo_configurator_resolve.active}"
         website_configurator_handled: "${odoo_configurator_resolve.handled}"
         activation_pending_active: "${odoo_activation_pending_resolve.active}"
