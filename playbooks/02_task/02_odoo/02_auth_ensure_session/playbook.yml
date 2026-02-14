@@ -29,13 +29,9 @@
       url_contains: "/website/configurator"
       url_not_contains: "/website/configurator"
       timeout_secs: 25
+      auto_candidates: true
       implicit_wait_ms: 1200
       retry_interval_ms: 150
-      text_candidates:
-        - "Omitir y empezar desde cero"
-        - "Skip and start from scratch"
-        - "¡Hagámoslo!"
-        - "Let's do it"
 
   - name: Abort if website configurator is still blocking
     if: "${odoo_configurator_resolve.active}"
@@ -46,29 +42,20 @@
         Odoo website configurator is still blocking flow.
         Resolution data: ${odoo_configurator_resolve}
 
-  - name: Detect activation pending entry
-    action: Helium.ExistsAny
-    register: odoo_activation_pending_exists
-    confirm_progress: false
-    params:
-      port: "${DEBUG_PORT}"
-      text_candidates:
-        - "Activación pendiente"
-        - "Activation pending"
-
-  - name: Open activation pending panel
-    if: "${odoo_activation_pending_exists.exists}"
-    action: Helium.ClickAny
-    register: odoo_activation_pending_click
+  - name: Resolve activation interstitial (if present)
+    action: Helium.ResolveInterstitial
+    register: odoo_activation_pending_resolve
     ignore_errors: true
     confirm_progress: false
     params:
       port: "${DEBUG_PORT}"
+      timeout_secs: 10
+      auto_candidates: true
       implicit_wait_ms: 1000
       retry_interval_ms: 140
-      text_candidates:
-        - "Activación pendiente"
-        - "Activation pending"
+      active_text_keywords:
+        - "activación pendiente"
+        - "activation pending"
 
   - name: Check if login page is visible
     action: Helium.Exists
@@ -318,8 +305,8 @@
         odoo_url: "${ODOO_URL}"
         website_configurator_active: "${odoo_configurator_resolve.active}"
         website_configurator_handled: "${odoo_configurator_resolve.handled}"
-        activation_pending_detected: "${odoo_activation_pending_exists.exists}"
-        activation_pending_click_ok: "${odoo_activation_pending_click.ok}"
+        activation_pending_active: "${odoo_activation_pending_resolve.active}"
+        activation_pending_handled: "${odoo_activation_pending_resolve.handled}"
         login_page_initially_visible: "${odoo_login_visible.exists}"
         login_page_still_visible: "${odoo_login_still_visible.exists}"
         learned_signin_label: "${ODOO_SIGNIN_LABEL_HIT}"
