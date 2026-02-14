@@ -1,51 +1,15 @@
 steps:
-  - name: Ensure ODOO_URL exists
-    if_not: "${ODOO_URL}"
+  - name: Ensure WAIBA_SKILLS_DIR is available
+    if_not: "${WAIBA_SKILLS_DIR}"
     action: Fail
     params:
-      text: "Missing ODOO_URL before eCommerce installation."
+      text: "Missing WAIBA_SKILLS_DIR before reusable Odoo module install."
 
-  - name: Connect to Odoo tab
-    action: CDP.Connect
-    params:
-      port: "${DEBUG_PORT}"
-      open_url: "${ODOO_URL}"
-      target_type: page
-      target_url_contains: ".odoo.com"
-
-  - name: Navigate to Odoo instance
-    action: CDP.Navigate
-    params:
-      port: "${DEBUG_PORT}"
-      url: "${ODOO_URL}"
-      wait_ms: 2500
-
-  - name: Load Odoo eCommerce installer script
-    action: FS.ReadText
-    register: js_odoo_install_ecommerce
-    params:
-      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_install_ecommerce.js"
-
-  - name: Execute Odoo eCommerce install via in-session JSON-RPC
-    action: CDP.EvaluateJson
-    register: ecommerce_install_result
-    params:
-      port: "${DEBUG_PORT}"
-      await_promise: true
-      expression: "${js_odoo_install_ecommerce}"
-
-  - name: Abort if eCommerce install did not complete
-    if_not: "${ecommerce_install_result.ok}"
-    action: Fail
-    params:
-      text: "eCommerce install failed: ${ecommerce_install_result.error}${ecommerce_install_result.reason}"
-
-  - name: Persist installation checkpoint
-    action: FS.WriteJson
-    params:
-      path: "${OUTPUT_DIR}\\odoo_ecommerce_install_checkpoint.json"
-      overwrite: true
-      value:
-        ok: "${ecommerce_install_result.ok}"
-        odoo_url: "${ODOO_URL}"
-        install: "${ecommerce_install_result}"
+  - name: Install eCommerce module via reusable Odoo RPC skill
+    playbook: "${WAIBA_SKILLS_DIR}\\odoo\\odoo-rpc-playbooks\\playbooks\\01_modules_ensure\\playbook.yml"
+    with:
+      ODOO_MODULE_NAMES:
+        - website_sale
+      ODOO_MODULES_INSTALL_TIMEOUT_MS: 300000
+      ODOO_MODULES_POLL_MS: 1500
+      ODOO_CHECKPOINT_PATH: "${OUTPUT_DIR}\\odoo_ecommerce_install_checkpoint.json"

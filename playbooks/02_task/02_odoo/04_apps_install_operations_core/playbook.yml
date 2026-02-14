@@ -1,51 +1,19 @@
 steps:
-  - name: Ensure ODOO_URL exists
-    if_not: "${ODOO_URL}"
+  - name: Ensure WAIBA_SKILLS_DIR is available
+    if_not: "${WAIBA_SKILLS_DIR}"
     action: Fail
     params:
-      text: "Missing ODOO_URL before operations-core installation."
+      text: "Missing WAIBA_SKILLS_DIR before reusable Odoo module install."
 
-  - name: Connect to Odoo tab
-    action: CDP.Connect
-    params:
-      port: "${DEBUG_PORT}"
-      open_url: "${ODOO_URL}"
-      target_type: page
-      target_url_contains: ".odoo.com"
-
-  - name: Navigate to Odoo instance
-    action: CDP.Navigate
-    params:
-      port: "${DEBUG_PORT}"
-      url: "${ODOO_URL}"
-      wait_ms: 2500
-
-  - name: Load Odoo operations-core installer script
-    action: FS.ReadText
-    register: js_odoo_install_ops_core
-    params:
-      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_install_operations_core.js"
-
-  - name: Execute Odoo operations-core install via in-session JSON-RPC
-    action: CDP.EvaluateJson
-    register: ops_core_install_result
-    params:
-      port: "${DEBUG_PORT}"
-      await_promise: true
-      expression: "${js_odoo_install_ops_core}"
-
-  - name: Abort if operations-core install did not complete
-    if_not: "${ops_core_install_result.ok}"
-    action: Fail
-    params:
-      text: "Operations core install failed: ${ops_core_install_result.error}${ops_core_install_result.reason}"
-
-  - name: Persist operations core checkpoint
-    action: FS.WriteJson
-    params:
-      path: "${OUTPUT_DIR}\\odoo_operations_core_checkpoint.json"
-      overwrite: true
-      value:
-        ok: "${ops_core_install_result.ok}"
-        odoo_url: "${ODOO_URL}"
-        install: "${ops_core_install_result}"
+  - name: Install operations core modules via reusable Odoo RPC skill
+    playbook: "${WAIBA_SKILLS_DIR}\\odoo\\odoo-rpc-playbooks\\playbooks\\01_modules_ensure\\playbook.yml"
+    with:
+      ODOO_MODULE_NAMES:
+        - website
+        - sale_management
+        - purchase
+        - stock
+        - account
+      ODOO_MODULES_INSTALL_TIMEOUT_MS: 360000
+      ODOO_MODULES_POLL_MS: 2000
+      ODOO_CHECKPOINT_PATH: "${OUTPUT_DIR}\\odoo_operations_core_checkpoint.json"

@@ -2,8 +2,15 @@
   actions: []
   buckets: 
     - ecommerce
+    - odoo
     - core
-  skills: []
+  skills: 
+    - id: ecommerce.odoo-online-playbooks
+      kind: playbook_bundle
+      source: %USERPROFILE%\.waiba\skills\ecommerce\odoo-online-playbooks
+    - id: odoo.odoo-rpc-playbooks
+      kind: playbook_bundle
+      source: %USERPROFILE%\.waiba\skills\odoo\odoo-rpc-playbooks
 policy: 
   architect_profile_manifest: ARCHITECT_PROFILE.md
   architect_profile_required: 1
@@ -11,10 +18,12 @@ policy:
   autonomy_manifest: AUTONOMY.md
   continuous_self_optimization: 1
   deep_mechanism_analysis_required: 1
+  forbid_online_skill_implementation_in_ahk: 1
   innovation_hacks_required: 1
   learned_candidate_replay_only: 1
   max_file_lines: 600
   objective_driven: 1
+  online_workflows_playbook_only: 1
   perception_first: 1
   playbook_folder_naming: NN_topic/NN_subtopic
   reusable_code_in_project: 0

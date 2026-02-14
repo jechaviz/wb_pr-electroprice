@@ -74,12 +74,22 @@ High-level flow:
 - Warehouse rebranding -> Odoo internal operation -> ship to customer
 
 ### 4.2 Implemented Playbook Modules
+- `playbooks/02_task/01_execute/playbook.yml` (orquestador limpio)
+- `playbooks/02_task/02_odoo/01_trial_provision/playbook.yml` (wrapper/import de reusable trial provision)
+- `playbooks/02_task/02_odoo/02_instance_configure/playbook.yml` (wrapper/import de reusable instance configure)
 - `playbooks/02_task/02_odoo/03_apps_install_ecommerce/playbook.yml`
 - `playbooks/02_task/02_odoo/04_apps_install_operations_core/playbook.yml`
 - `playbooks/02_task/02_odoo/05_config_branding/playbook.yml`
 - `playbooks/02_task/02_odoo/06_config_dropshipping_ops/playbook.yml`
 - `playbooks/02_task/03_integration/01_wholesalers_scaffold/playbook.yml`
 - `playbooks/03_finalize/01_validate/playbook.yml`
+
+Reusable source bundle location:
+- `%USERPROFILE%\\.waiba\\skills\\ecommerce\\odoo-online-playbooks\\playbooks\\01_trial_provision\\playbook.yml`
+- `%USERPROFILE%\\.waiba\\skills\\ecommerce\\odoo-online-playbooks\\playbooks\\02_instance_configure\\playbook.yml`
+- `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\01_modules_ensure\\playbook.yml`
+- `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\02_branding_apply\\playbook.yml`
+- `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\03_baseline_verify\\playbook.yml`
 
 ### 4.3 Old-to-New Migration Mapping
 - Legacy source: `C:\\git\\customers\\bu\\electroprice`.
@@ -143,9 +153,9 @@ Record each change in `FRAMEWORK_GROWTH.md`.
 
 ## Completion Record
 
-- task: Bootstrap Electroprice in Odoo Enterprise
+- task: Operationalize Electroprice dropshipping on a verified user-owned Odoo instance
 - status: completed
-- completed_at: 2026-02-12 18:33:58
+- completed_at: 2026-02-14 09:18:00
 
 
 ## Architect-Level Runtime Constraints (Mandatory)
@@ -161,3 +171,10 @@ Record each change in `FRAMEWORK_GROWTH.md`.
 - Hard decomposition threshold: any file > 600 lines triggers decomposition.
 - Apply OOP/AOP/SoC/SOLID/DRY and design patterns to lower maintenance and time complexity.
 - Prefer one-class-per-file (except thin facades) and explicit module boundaries.
+
+
+## Online Flow Implementation Boundary (Mandatory)
+
+- Online workflow ownership boundary: playbooks/subplaybooks own SaaS/business navigation and state transitions.
+- Runtime skill layer stays generic and reusable (transport, perception, dispatch), avoiding domain-online vertical hardcoding.
+- Enforcement: policy manifests must declare online_workflows_playbook_only and orbid_online_skill_implementation_in_ahk.

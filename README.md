@@ -5,7 +5,7 @@
 - Skill path: `Ecommerce.Electroprice`
 - Category: `ecommerce/dropshipping`
 - Customer: `BU`
-- Task: `Operationalize Electroprice dropshipping baseline on Odoo`
+- Task: `Operationalize Electroprice dropshipping on a verified user-owned Odoo instance`
 - Migration target: move capabilities from `C:\git\customers\bu\electroprice` into Odoo-native execution.
 
 ## Solo Mode Contract
@@ -35,6 +35,18 @@
 - `TASK_STATUS.md`: completion status.
 - `FRAMEWORK_GROWTH.md`: framework evolution log.
 - `secrets.yml`: project-local secrets (auto-created on bootstrap if missing).
+
+## Reusable Playbook Imports
+- Reusable Odoo online phases live in `.waiba/skills` and are imported by this project:
+  - `%USERPROFILE%\\.waiba\\skills\\ecommerce\\odoo-online-playbooks\\playbooks\\01_trial_provision\\playbook.yml`
+  - `%USERPROFILE%\\.waiba\\skills\\ecommerce\\odoo-online-playbooks\\playbooks\\02_instance_configure\\playbook.yml`
+  - `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\01_modules_ensure\\playbook.yml`
+  - `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\02_branding_apply\\playbook.yml`
+  - `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\03_baseline_verify\\playbook.yml`
+- Project wrappers (case-use import points):
+  - `playbooks/02_task/02_odoo/01_trial_provision/playbook.yml`
+  - `playbooks/02_task/02_odoo/02_instance_configure/playbook.yml`
+- Electroprice keeps only case-specific logic in project scope (dropshipping business specifics, project UI, custom server actions/scripts).
 
 ## Odoo Migration Scope
 - Build the new Odoo-native platform by migrating useful behavior from the old stack:
@@ -101,3 +113,10 @@
 - Hard limit: any source/doc/playbook file over 600 lines must be refactored before merge.
 - Refactor objective: maximize SoC + DRY + SOLID + lower cognitive and algorithmic complexity.
 - Playbooks must be nested and numbered (playbooks/NN_topic/NN_subtopic/playbook.yml).
+
+
+## Online Workflow Boundary (Mandatory)
+
+- Hard policy: online business workflows (signup/login/activation/configurators/SaaS state changes) must be implemented in project playbooks/subplaybooks.
+- AHK skills may provide generic runtime primitives only (Browser/CDP/Helium/HTTP/etc), not vertical online flow ownership.
+- If an online flow appears as a dedicated AHK skill, migrate it to playbooks first, then prune the skill path.
