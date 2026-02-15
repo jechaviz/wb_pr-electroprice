@@ -65,6 +65,7 @@ steps:
         register: storefront_configure_eval
         params:
           port: "${DEBUG_PORT}"
+          timeout_ms: 180000
           method: "Runtime.evaluate"
           params:
             expression: "${js_odoo_configure_storefront_pages}"
