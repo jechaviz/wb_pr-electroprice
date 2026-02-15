@@ -1,0 +1,129 @@
+steps:
+  - name: Delete previous storefront pages checkpoint when forcing reset
+    if: "${FORCE_RESET_CHECKPOINTS}"
+    action: FS.Delete
+    ignore_errors: true
+    params:
+      path: "${OUTPUT_DIR}\\odoo_storefront_pages_checkpoint.json"
+
+  - name: Check storefront pages checkpoint
+    action: FS.Exists
+    register: has_storefront_pages_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_storefront_pages_checkpoint.json"
+
+  - name: Connect to Odoo tab (CDP)
+    action: CDP.Connect
+    params:
+      port: "${DEBUG_PORT}"
+      open_url: "${ODOO_URL}"
+      target_type: page
+      target_url_contains: ".odoo.com"
+
+  - name: Navigate to Odoo instance
+    confirm_progress: false
+    action: CDP.Navigate
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+      wait_ms: 2200
+
+  - name: Load storefront pages verifier script
+    action: FS.ReadText
+    register: js_odoo_verify_storefront_pages
+    params:
+      path: "${JS_DIR}\\odoo\\rpc_verify_storefront_pages.js"
+
+  - name: Verify storefront pages (live) before patch
+    action: CDP.EvaluateJson
+    register: storefront_verify_before
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 60000
+      await_promise: true
+      expression: "${js_odoo_verify_storefront_pages}"
+
+  - name: Persist storefront pages live verification (before)
+    if: "${DEBUG_EVIDENCE}"
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_storefront_pages_verify_before.json"
+      overwrite: true
+      value: "${storefront_verify_before}"
+
+  - name: Configure storefront pages (homepage + product page) when verification fails
+    if_not: "${storefront_verify_before.ok}"
+    steps:
+      - name: Load storefront pages configurator script
+        action: FS.ReadText
+        register: js_odoo_configure_storefront_pages
+        params:
+          path: "${JS_DIR}\\odoo\\rpc_configure_storefront_pages.js"
+
+      - name: Execute storefront pages configurator (raw CDP Runtime.evaluate)
+        action: CDP.Send
+        register: storefront_configure_eval
+        params:
+          port: "${DEBUG_PORT}"
+          method: "Runtime.evaluate"
+          params:
+            expression: "${js_odoo_configure_storefront_pages}"
+            returnByValue: true
+            awaitPromise: true
+
+      - name: Extract storefront pages configurator result value
+        action: Set
+        params:
+          name: odoo_storefront_pages_checkpoint
+          value: "${storefront_configure_eval.result.result.value}"
+
+      - name: Persist storefront pages configurator attempt (debug)
+        action: FS.WriteJson
+        params:
+          path: "${OUTPUT_DIR}\\odoo_storefront_pages_configure_attempt.json"
+          overwrite: true
+          value: "${odoo_storefront_pages_checkpoint}"
+
+      - name: Persist storefront pages configurator CDP response (debug)
+        action: FS.WriteJson
+        params:
+          path: "${OUTPUT_DIR}\\odoo_storefront_pages_configure_attempt.cdp.json"
+          overwrite: true
+          value: "${storefront_configure_eval}"
+
+      - name: Abort if storefront pages configurator failed
+        if_not: "${odoo_storefront_pages_checkpoint.ok}"
+        action: Fail
+        params:
+          text: "Storefront pages configurator failed: ${odoo_storefront_pages_checkpoint}"
+
+      - name: Re-verify storefront pages (live) after patch
+        action: CDP.EvaluateJson
+        register: storefront_verify_after
+        params:
+          port: "${DEBUG_PORT}"
+          timeout_ms: 60000
+          await_promise: true
+          expression: "${js_odoo_verify_storefront_pages}"
+
+      - name: Persist storefront pages live verification (after)
+        if: "${DEBUG_EVIDENCE}"
+        action: FS.WriteJson
+        params:
+          path: "${OUTPUT_DIR}\\odoo_storefront_pages_verify_after.json"
+          overwrite: true
+          value: "${storefront_verify_after}"
+
+      - name: Persist storefront pages checkpoint (only after successful verification)
+        if: "${storefront_verify_after.ok}"
+        action: FS.WriteJson
+        params:
+          path: "${OUTPUT_DIR}\\odoo_storefront_pages_checkpoint.json"
+          overwrite: true
+          value: "${odoo_storefront_pages_checkpoint}"
+
+      - name: Abort if storefront pages verification still fails after patch
+        if_not: "${storefront_verify_after.ok}"
+        action: Fail
+        params:
+          text: "Storefront pages verifier still failing after patch: ${storefront_verify_after}"

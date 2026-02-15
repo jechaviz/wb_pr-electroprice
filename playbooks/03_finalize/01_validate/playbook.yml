@@ -84,6 +84,12 @@ steps:
     params:
       path: "${OUTPUT_DIR}\\odoo_marketplace_mvp_checkpoint.json"
 
+  - name: Validate storefront pages checkpoint artifact
+    action: FS.Exists
+    register: has_storefront_pages_checkpoint
+    params:
+      path: "${OUTPUT_DIR}\\odoo_storefront_pages_checkpoint.json"
+
   - name: Validate auth method trace artifact
     action: FS.Exists
     register: has_auth_method_trace
@@ -252,6 +258,31 @@ steps:
       overwrite: true
       value: "${odoo_live_marketplace_mvp_verify}"
 
+  - name: Load Odoo storefront pages verifier script
+    if: "${has_odoo_url}"
+    action: FS.ReadText
+    register: js_odoo_verify_storefront_pages
+    params:
+      path: "${PLAYBOOKS_DIR}\\js\\odoo\\rpc_verify_storefront_pages.js"
+
+  - name: Execute live Odoo storefront pages verification
+    if: "${has_odoo_url}"
+    action: CDP.EvaluateJson
+    register: odoo_live_storefront_pages_verify
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_ms: 45000
+      await_promise: true
+      expression: "${js_odoo_verify_storefront_pages}"
+
+  - name: Persist live Odoo storefront pages verification artifact
+    if: "${has_odoo_url}"
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_live_storefront_pages_verify.json"
+      overwrite: true
+      value: "${odoo_live_storefront_pages_verify}"
+
   - name: Build readiness report
     action: FS.WriteJson
     params:
@@ -278,6 +309,7 @@ steps:
           legacy_migration_checkpoint: "${has_legacy_migration_checkpoint}"
           odoo_solution_bundle_checkpoint: "${has_odoo_solution_bundle_checkpoint}"
           marketplace_mvp_checkpoint: "${has_marketplace_mvp_checkpoint}"
+          storefront_pages_checkpoint: "${has_storefront_pages_checkpoint}"
           auth_method_trace: "${has_auth_method_trace}"
           auth_identity_trace: "${has_auth_identity_trace}"
           auth_method_ok: "${auth_method_check.json.ok}"
@@ -311,6 +343,11 @@ steps:
           odoo_live_marketplace_mvp_missing_connector_keys: "${odoo_live_marketplace_mvp_verify.missing_connector_keys}"
           odoo_live_marketplace_mvp_has_website_page_model: "${odoo_live_marketplace_mvp_verify.has_website_page_model}"
           odoo_live_marketplace_mvp_missing_portal_pages: "${odoo_live_marketplace_mvp_verify.missing_portal_pages}"
+          odoo_live_storefront_pages_verify_ok: "${odoo_live_storefront_pages_verify.ok}"
+          odoo_live_storefront_pages_home_markers_ok: "${odoo_live_storefront_pages_verify.homepage.markers_ok}"
+          odoo_live_storefront_pages_home_missing_markers: "${odoo_live_storefront_pages_verify.homepage.missing_markers}"
+          odoo_live_storefront_pages_product_markers_ok: "${odoo_live_storefront_pages_verify.product_enhancement_view.markers_ok}"
+          odoo_live_storefront_pages_product_missing_markers: "${odoo_live_storefront_pages_verify.product_enhancement_view.missing_markers}"
 
   - name: Abort if repo sync artifact is missing
     if_not: "${has_repo_sync}"
@@ -384,6 +421,12 @@ steps:
     params:
       command: "exit 1"
 
+  - name: Abort if storefront pages checkpoint is missing
+    if_not: "${has_storefront_pages_checkpoint}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
   - name: Abort if auth method trace is missing
     if_not: "${has_auth_method_trace}"
     action: Shell.Run
@@ -428,6 +471,12 @@ steps:
 
   - name: Abort if live Odoo marketplace MVP verification failed
     if_not: "${odoo_live_marketplace_mvp_verify.ok}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if live Odoo storefront pages verification failed
+    if_not: "${odoo_live_storefront_pages_verify.ok}"
     action: Shell.Run
     params:
       command: "exit 1"

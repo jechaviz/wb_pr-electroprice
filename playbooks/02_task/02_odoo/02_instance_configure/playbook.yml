@@ -7,3 +7,6 @@ steps:
 
   - name: Import reusable Odoo instance configuration flow
     playbook: "${WAIBA_SKILLS_DIR}\\ecommerce\\odoo-online-playbooks\\playbooks\\02_instance_configure\\playbook.yml"
+
+  - name: Apply Electroprice storefront pages polish (homepage + product page)
+    playbook: "../10_storefront_pages/playbook.yml"
