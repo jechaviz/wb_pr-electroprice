@@ -148,10 +148,8 @@ Each evolution must be registered in `FRAMEWORK_GROWTH.md`.
 ## Completion Record
 
 - task: Operationalize Electroprice dropshipping on a verified user-owned Odoo instance
-- status: in_progress
-- last_updated_at: 2026-02-15
-
-
+- status: completed
+- completed_at: 2026-02-14 20:17:56
 ## Architect Intelligence Baseline (Mandatory)
 
 - Non-negotiable baseline: act at architect-level rigor (design quality, reproducibility, pruning discipline).
@@ -172,3 +170,6 @@ Each evolution must be registered in `FRAMEWORK_GROWTH.md`.
 - Mandatory architecture: online workflows are authored as playbooks/subplaybooks, not as dedicated online AHK skills.
 - Scope rule: prefer extending generic primitives (Helium/CDP/HTTP) and keep business flow orchestration in YAML.
 - Migration rule: when a legacy online skill exists, keep parity only until playbook replacement is validated, then prune.
+
+
+
