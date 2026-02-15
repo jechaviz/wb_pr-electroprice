@@ -6,7 +6,7 @@
 - Category: ecommerce / dropshipping
 - Customer: BU
 - Course/Context: generic
-- Task: Bootstrap Electroprice in Odoo Enterprise
+- Task: Operationalize Electroprice dropshipping on a verified user-owned Odoo instance
 
 ## 1.1 Project As Reusable Module
 - Hierarchical naming contract: `<skill_n0>.<skill_n1>.<skill_n2>...<skill_nN>`
@@ -17,7 +17,7 @@
 - Rule: each stable capability from this project must be documented as a reusable subskill path.
 
 ## 2. Problem Statement
-Clone electroprice repo, create Odoo Enterprise (eCommerce), then customize for dropshipping + wholesaler integrations.
+Clone electroprice repo, create/use Odoo Enterprise (eCommerce), and customize for dropshipping + wholesaler integrations with verifiable account ownership and authenticated session identity.
 
 ## 3. Goals
 - Deliver a reproducible `playbook.yaml` that solves the target task.
@@ -25,6 +25,7 @@ Clone electroprice repo, create Odoo Enterprise (eCommerce), then customize for 
 - Complete the run with explicit task completion status.
 - Convert stable task-specific logic into reusable subskills/modules.
 - Execute in autonomous `solo mode` by default (end-to-end without waiting for manual prompts).
+- Enforce identity traceability: completion is valid only when authenticated Odoo identity is observable (`uid` + login/inbox trace).
 
 ## 4. Non-Goals
 - Modifying third-party libraries unless required.
@@ -72,6 +73,7 @@ Clone electroprice repo, create Odoo Enterprise (eCommerce), then customize for 
 - Company name/branding: Electroprice
 - Website storefront enabled
 - Products, categories, and pricelists ready for sync
+- Trial/auth email used by automation must be a usable inbox (noreply aliases are invalid).
 
 ## 5.3 Integration Requirements
 - Wholesaler connectors:
@@ -112,7 +114,13 @@ Each evolution must be registered in `FRAMEWORK_GROWTH.md`.
 | `Ecommerce.Electroprice` | Main project capability | active | yes |
 | `<skill_n0>.<skill_n1>.<skill_n2>` | Fill during implementation | draft | no |
 
-## 8. Acceptance Criteria
+## 8. User Acceptance Criteria (UAC)
+- UAC-01: The instance is owned/operated under a verifiable authenticated user session (not anonymous/public).
+- UAC-02: The trial/auth flow does not rely on noreply aliases; it uses a real accessible inbox.
+- UAC-03: User can rerun `playbook.yaml` in `prod` without redoing one-time setup tasks, while routine checks still run.
+- UAC-04: Final state reflects a usable Electroprice baseline in Odoo (storefront + operations + dropshipping + integration scaffolds).
+
+## 8.1 Technical Acceptance Criteria
 - Playbook executes reproducibly for env `prod`.
 - `README.md`, `PRD.md`, `SDD.md`, and `TASK_STATUS.md` exist and are updated.
 - Output artifacts are present in `playbooks/output/`.
@@ -131,14 +139,17 @@ Each evolution must be registered in `FRAMEWORK_GROWTH.md`.
 - Live Odoo migration parity verification exists and passes: `playbooks/output/odoo_live_migration_verify.json` with `ok=true`.
 - Live Odoo solution bundle verification exists and passes: `playbooks/output/odoo_live_solution_bundle_verify.json` with `ok=true`.
 - Live Odoo marketplace MVP verification exists and passes: `playbooks/output/odoo_live_marketplace_mvp_verify.json` with `ok=true`.
+- Auth method trace exists: `playbooks/output/odoo_auth_method.txt`.
+- Auth identity trace exists: `playbooks/output/odoo_auth_identity.json`.
+- Live verifier reports authenticated identity: `session_uid > 0` and `session_login` not empty.
 - Growth decisions are logged when applied.
 
 
 ## Completion Record
 
-- task: Bootstrap Electroprice in Odoo Enterprise
-- status: completed
-- completed_at: 2026-02-12 18:33:58
+- task: Operationalize Electroprice dropshipping on a verified user-owned Odoo instance
+- status: in_progress
+- last_updated_at: 2026-02-15
 
 
 ## Architect Intelligence Baseline (Mandatory)
@@ -154,3 +165,10 @@ Each evolution must be registered in `FRAMEWORK_GROWTH.md`.
 - Trigger: file length > 600 lines => mandatory refactor before declaring completion.
 - Refactor strategy: split by responsibility/class, isolate cross-cutting concerns, reduce duplication.
 - For playbooks, replace giant flows with nested numbered modules.
+
+
+## Online Flow Implementation Policy (Mandatory)
+
+- Mandatory architecture: online workflows are authored as playbooks/subplaybooks, not as dedicated online AHK skills.
+- Scope rule: prefer extending generic primitives (Helium/CDP/HTTP) and keep business flow orchestration in YAML.
+- Migration rule: when a legacy online skill exists, keep parity only until playbook replacement is validated, then prune.
