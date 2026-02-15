@@ -1,4 +1,5 @@
-﻿  - name: Check for login page (best-effort)
+﻿steps:
+  - name: Check for login page (best-effort)
     if_not: "${odoo_url_meta_pre.is_instance}"
     action: Helium.WaitUntilUrl
     register: login_page_meta

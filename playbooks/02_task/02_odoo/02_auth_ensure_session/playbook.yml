@@ -57,6 +57,38 @@
         - "activación pendiente"
         - "activation pending"
 
+  - name: Attempt activation via Yopmail (playbook-only online flow)
+    if: "${odoo_activation_pending_resolve.active}"
+    if_not: "${odoo_activation_pending_resolve.handled}"
+    playbook: "./01_activation_via_yopmail/playbook.yml"
+
+  - name: Re-check activation interstitial after Yopmail attempt
+    if: "${odoo_activation_pending_resolve.active}"
+    if_not: "${odoo_activation_pending_resolve.handled}"
+    action: Helium.ResolveInterstitial
+    register: odoo_activation_pending_resolve
+    ignore_errors: true
+    confirm_progress: false
+    params:
+      port: "${DEBUG_PORT}"
+      timeout_secs: 10
+      auto_candidates: true
+      implicit_wait_ms: 1000
+      retry_interval_ms: 140
+      active_text_keywords:
+        - "activación pendiente"
+        - "activation pending"
+
+  - name: Abort if activation interstitial is still blocking
+    if: "${odoo_activation_pending_resolve.active}"
+    if_not: "${odoo_activation_pending_resolve.handled}"
+    action: Fail
+    params:
+      text: |
+        Odoo activation flow is still blocking execution.
+        This instance requires email activation before authenticated setup can continue.
+        Resolution data: ${odoo_activation_pending_resolve}
+
   - name: Check if login page is visible
     action: Helium.Exists
     register: odoo_login_visible

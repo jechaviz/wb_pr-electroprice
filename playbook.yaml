@@ -14,8 +14,8 @@ variables:
   PROJECT_SKILL_N3: ""
   PROJECT_DIR: "${ROOT_PLAYBOOK_DIR}"
   PLAYBOOKS_DIR: "${PROJECT_DIR}\\playbooks"
-  TASK_NAME: "Operationalize Electroprice dropshipping baseline on Odoo"
-  TASK_SUMMARY: "Sync electroprice repo, bootstrap Odoo, configure eCommerce+operations+dropshipping flow, and scaffold wholesaler integration assets."
+  TASK_NAME: "Operationalize Electroprice dropshipping on a verified user-owned Odoo instance"
+  TASK_SUMMARY: "Sync electroprice repo, provision/configure Odoo for dropshipping, and complete with verified authenticated account identity and readiness artifacts."
   DEBUG_PORT: 9222
   ELECTROPRICE_GIT_URL: "https://github.com/jechaviz/electroprice"
   ELECTROPRICE_REPO_DIR: "C:\\git\\customers\\bu\\electroprice"
@@ -23,7 +23,7 @@ variables:
   MAIL_URL: "https://mail.google.com/"
   OUTPUT_DIR: "${PLAYBOOKS_DIR}\\output"
   JS_DIR: "${PLAYBOOKS_DIR}\\js"
-  ODOO_INSTANCE_ALIAS_BASE: "electroprice"
+  ODOO_INSTANCE_ALIAS_BASE: "electroprice3"
   TRIAL_CONTACT_NAME: "Electroprice Ops"
   TRIAL_COMPANY_NAME: "Electroprice"
   # Defaults from `${SCRIPT_DIR}\\secrets.yml` or `${PROJECT_DIR}\\secrets.yml` / `${PROJECT_DIR}\\.secrets.yml` (optional).
@@ -96,8 +96,8 @@ steps:
     - name: Bootstrap runtime
       playbook: "./playbooks/01_bootstrap/02_runtime/playbook.yml"
 
-    - name: Create Odoo Enterprise instance (autonomous)
-      playbook: "./playbooks/02_task/02_odoo/01_trial_create/playbook.yml"
+    - name: Provision Odoo trial (create + activation + authenticated session)
+      playbook: "./playbooks/02_task/02_odoo/01_trial_provision/playbook.yml"
 
   debug:
     - action: Note

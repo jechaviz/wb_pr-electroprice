@@ -1,0 +1,139 @@
+steps:
+  - name: Validate TRIAL_EMAIL exists for Yopmail activation
+    if_not: "${TRIAL_EMAIL}"
+    action: Fail
+    params:
+      text: |
+        TRIAL_EMAIL is required to perform Yopmail activation automation.
+        Configure `odoo.trial_email` in project secrets.
+
+  - name: Validate TRIAL_EMAIL belongs to yopmail.com
+    action: Shell.Run
+    register: yopmail_email_validation
+    params:
+      command: 'powershell -NoProfile -Command "$e = (''${TRIAL_EMAIL}'' | Out-String).Trim().ToLower(); $ok = $false; $local = ''''; if ($e -match ''^(?<local>[^@]+)@yopmail\.com$'') { $ok = $true; $local = $Matches.local }; @{ ok = $ok; email = $e; local_part = $local } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
+
+  - name: Abort when activation inbox is not Yopmail
+    if_not: "${yopmail_email_validation.json.ok}"
+    action: Fail
+    params:
+      text: |
+        Activation automation expects a Yopmail inbox.
+        Current TRIAL_EMAIL is not @yopmail.com: ${yopmail_email_validation.json.email}
+
+  - name: Export Yopmail local part
+    action: Set
+    params:
+      name: YOPMAIL_LOCAL_PART
+      value: "${yopmail_email_validation.json.local_part}"
+
+  - name: Initialize activation flag
+    action: Set
+    params:
+      name: YOPMAIL_ACTIVATED
+      value: false
+
+  - name: Open Yopmail inbox
+    action: Helium.GoTo
+    params:
+      port: "${DEBUG_PORT}"
+      url: "https://yopmail.com/?${YOPMAIL_LOCAL_PART}"
+
+  - name: Wait for Yopmail page
+    action: Helium.WaitUntilUrl
+    params:
+      port: "${DEBUG_PORT}"
+      contains: "yopmail.com"
+      timeout_secs: 25
+      interval_ms: 300
+
+  - name: Poll inbox and activate account link
+    loop: 30
+    steps:
+      - name: Refresh inbox page
+        action: Helium.Refresh
+        ignore_errors: true
+        params:
+          port: "${DEBUG_PORT}"
+          wait_ms: 1000
+
+      - name: Open Odoo activation email candidate
+        action: Helium.ClickAny
+        register: yopmail_open_mail
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text_candidates:
+            - "odoo"
+            - "activate"
+            - "activation"
+            - "verify"
+            - "confirm"
+          auto_candidates: true
+          find_in_page_fallback: true
+          implicit_wait_ms: 1300
+          retry_interval_ms: 150
+
+      - name: Click activation link/button candidate
+        if: "${yopmail_open_mail.clicked}"
+        action: Helium.ClickAny
+        register: yopmail_click_activation
+        ignore_errors: true
+        confirm_progress: false
+        params:
+          port: "${DEBUG_PORT}"
+          text_candidates:
+            - "Activate your account"
+            - "Activate account"
+            - "Activate"
+            - "Activar"
+            - "Verificar"
+            - "Verify email"
+            - "Confirm"
+            - "Confirmar"
+            - "Go to my database"
+            - "Acceder"
+            - "Continuar"
+            - "Continue"
+          auto_candidates: true
+          find_in_page_fallback: true
+          implicit_wait_ms: 1500
+          retry_interval_ms: 150
+
+      - name: Mark activation completed when click succeeded
+        if: "${yopmail_click_activation.clicked}"
+        action: Set
+        params:
+          name: YOPMAIL_ACTIVATED
+          value: true
+
+      - break_if: "${YOPMAIL_ACTIVATED}"
+
+      - name: Wait before next inbox poll
+        action: Shell.Run
+        ignore_errors: true
+        params:
+          command: 'powershell -NoProfile -Command "Start-Sleep -Seconds 3"'
+
+  - name: Abort when activation link was not found/clicked
+    if_not: "${YOPMAIL_ACTIVATED}"
+    action: Fail
+    params:
+      text: |
+        Yopmail activation automation failed.
+        Could not open/click an Odoo activation link from inbox `${YOPMAIL_LOCAL_PART}`.
+
+  - name: Return to Odoo instance
+    action: Helium.GoTo
+    params:
+      port: "${DEBUG_PORT}"
+      url: "${ODOO_URL}"
+
+  - name: Wait for Odoo page after activation
+    action: Helium.WaitUntilUrl
+    params:
+      port: "${DEBUG_PORT}"
+      contains: ".odoo.com"
+      timeout_secs: 25
+      interval_ms: 300

@@ -1,0 +1,36 @@
+metadata:
+  category: "ecommerce"
+  subcategory: "dropshipping"
+  customer: "BU"
+  lesson: "force_reconfigure"
+
+variables:
+  PROJECT_NAME: "Electroprice"
+  PROJECT_SKILL_PATH: "Ecommerce.Electroprice"
+  PROJECT_DIR: "${ROOT_PLAYBOOK_DIR}"
+  PLAYBOOKS_DIR: "${PROJECT_DIR}\\playbooks"
+  OUTPUT_DIR: "${PLAYBOOKS_DIR}\\output"
+  DEBUG_PORT: 9222
+  ODOO_INSTANCE_ALIAS_BASE: "electroprice3"
+  FORCE_NEW_ODOO_TRIAL: false
+  FORCE_RESET_CHECKPOINTS: true
+  ALLOW_LIVE_ODOO_TAB_DISCOVERY: false
+  PULL_EXISTING_REPO: false
+  TRIAL_EMAIL: "${secrets.odoo.trial_email}"
+  TRIAL_PHONE: "${secrets.odoo.trial_phone}"
+  ODOO_LOGIN_EMAIL: "${secrets.odoo.login_email}"
+  ODOO_LOGIN_PASSWORD: "${secrets.odoo.login_password}"
+
+steps:
+  prod:
+    - name: Bootstrap runtime
+      playbook: "./playbooks/01_bootstrap/02_runtime/playbook.yml"
+
+    - name: Ensure trial/session for electroprice3
+      playbook: "./playbooks/02_task/02_odoo/01_trial_provision/playbook.yml"
+
+    - name: Force reconfigure Odoo instance
+      playbook: "./playbooks/02_task/02_odoo/02_instance_configure/playbook.yml"
+
+    - name: Validate readiness after forced reconfigure
+      playbook: "./playbooks/03_finalize/01_validate/playbook.yml"

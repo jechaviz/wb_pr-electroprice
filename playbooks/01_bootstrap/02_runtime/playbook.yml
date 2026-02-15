@@ -32,6 +32,12 @@ steps:
       subcategory: "dropshipping"
       project_dir: "${PROJECT_DIR}"
 
+  - name: Export WAIBA reusable skills root into context
+    action: Set
+    params:
+      name: WAIBA_SKILLS_DIR
+      value: "${waiba_policy.skills_root}"
+
   - name: Import project skills from skills.yml
     action: Framework.Policy.ImportSkills
     register: waiba_skills_import

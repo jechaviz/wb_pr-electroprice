@@ -1,0 +1,9 @@
+steps:
+  - name: Ensure WAIBA reusable skills root is available
+    if_not: "${WAIBA_SKILLS_DIR}"
+    action: Fail
+    params:
+      text: "Missing WAIBA_SKILLS_DIR in context. Run bootstrap runtime policy first."
+
+  - name: Import reusable Odoo instance configuration flow
+    playbook: "${WAIBA_SKILLS_DIR}\\ecommerce\\odoo-online-playbooks\\playbooks\\02_instance_configure\\playbook.yml"
