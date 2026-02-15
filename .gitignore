@@ -1,12 +1,19 @@
 # Outputs / evidence
 playbooks/output/
+playbooks/**/output/
 
 # Local logs/state
 waiba_cli.log
 waiba_last.json
 playbooks/**/waiba_cli.log
 
+# Local scratch
+tmp_*.yml
+tmp_*.yaml
+tmp_*.json
+tmp_*.ps1
+tmp_*.ahk
+
 # Secrets
 secrets.yml
 .secrets.yml
-
