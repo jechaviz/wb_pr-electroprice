@@ -145,27 +145,49 @@
     list_price_markup_pct: 22
   };
 
-  const rpc = async (route, params) => {
-    const response = await fetch(route, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "call",
-        params: params || {},
-        id: Date.now() + Math.floor(Math.random() * 1000)
-      })
-    });
-    const json = await response.json();
-    if (json.error) {
-      const message =
-        (json.error.data && (json.error.data.message || json.error.data.debug)) ||
-        json.error.message ||
-        "jsonrpc_error";
-      throw new Error(message);
+  const rpc = async (route, params, opts) => {
+    const timeoutMs = Number((opts && opts.timeout_ms) || 25000);
+    const maxRetries = Number((opts && opts.max_retries) || 2);
+    let lastError = "";
+    for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
+      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+      let timer = 0;
+      try {
+        if (controller && timeoutMs > 0) {
+          timer = setTimeout(() => controller.abort("timeout"), timeoutMs);
+        }
+        const response = await fetch(route, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          signal: controller ? controller.signal : undefined,
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            method: "call",
+            params: params || {},
+            id: Date.now() + Math.floor(Math.random() * 1000)
+          })
+        });
+        if (timer) clearTimeout(timer);
+        const json = await response.json();
+        if (json.error) {
+          const message =
+            (json.error.data && (json.error.data.message || json.error.data.debug)) ||
+            json.error.message ||
+            "jsonrpc_error";
+          throw new Error(message);
+        }
+        return json.result;
+      } catch (error) {
+        if (timer) clearTimeout(timer);
+        lastError = String((error && error.message) || error || "unknown_rpc_error");
+        if (attempt < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, 200 * attempt));
+          continue;
+        }
+      }
     }
-    return json.result;
+    throw new Error("rpc_failed route=" + route + " error=" + lastError);
   };
 
   const callKw = (model, method, args, kwargs) =>
@@ -179,18 +201,6 @@
   const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
   const nonEmpty = (value) => String(value || "").trim() !== "";
 
-  const modelFields = async (model, names) => {
-    const rows = await callKw("ir.model.fields", "search_read", [[
-      ["model", "=", model],
-      ["name", "in", names]
-    ]], { fields: ["name"], limit: 200 });
-    const set = {};
-    for (const row of rows || []) {
-      if (row && row.name) set[row.name] = true;
-    }
-    return set;
-  };
-
   const session = await rpc("/web/session/get_session_info", {});
   if (!session || !session.uid) {
     return JSON.stringify({
@@ -200,16 +210,30 @@
     });
   }
 
-  const partnerFieldSet = await modelFields("res.partner", [
-    "supplier_rank", "company_type", "is_company", "email", "phone"
-  ]);
-  const productFieldSet = await modelFields("product.template", [
-    "default_code", "name", "categ_id", "list_price", "sale_ok", "purchase_ok",
-    "website_published", "description_sale", "description", "detailed_type", "type"
-  ]);
-  const supplierInfoFieldSet = await modelFields("product.supplierinfo", [
-    "partner_id", "product_tmpl_id", "price", "min_qty", "delay", "product_code"
-  ]);
+  const partnerFieldSet = {
+    supplier_rank: true,
+    email: true
+  };
+  const productFieldSet = {
+    default_code: true,
+    categ_id: true,
+    list_price: true,
+    sale_ok: true,
+    purchase_ok: true,
+    website_published: true,
+    detailed_type: false,
+    type: true,
+    description_sale: true,
+    description: true
+  };
+  const supplierInfoFieldSet = {
+    product_tmpl_id: true,
+    partner_id: true,
+    min_qty: true,
+    delay: true,
+    price: true,
+    product_code: true
+  };
 
   const categoryIdByKey = {};
   const categoryOps = { created: 0, updated: 0 };
@@ -237,8 +261,6 @@
       limit: 1
     });
     const vals = { name: supplier.name };
-    if (partnerFieldSet.company_type) vals.company_type = "company";
-    if (partnerFieldSet.is_company) vals.is_company = true;
     if (partnerFieldSet.supplier_rank) vals.supplier_rank = 1;
     if (partnerFieldSet.email && nonEmpty(supplier.email)) vals.email = supplier.email;
 

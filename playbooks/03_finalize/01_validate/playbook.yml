@@ -84,6 +84,47 @@ steps:
     params:
       path: "${OUTPUT_DIR}\\odoo_marketplace_mvp_checkpoint.json"
 
+  - name: Validate auth method trace artifact
+    action: FS.Exists
+    register: has_auth_method_trace
+    params:
+      path: "${OUTPUT_DIR}\\odoo_auth_method.txt"
+
+  - name: Validate auth identity trace artifact
+    action: FS.Exists
+    register: has_auth_identity_trace
+    params:
+      path: "${OUTPUT_DIR}\\odoo_auth_identity.json"
+
+  - name: Read auth method trace
+    if: "${has_auth_method_trace}"
+    action: FS.ReadText
+    register: auth_method_value
+    params:
+      path: "${OUTPUT_DIR}\\odoo_auth_method.txt"
+
+  - name: Validate auth method trace value
+    if: "${has_auth_method_trace}"
+    action: Shell.RunJson
+    register: auth_method_check
+    params:
+      command: 'powershell -NoProfile -Command "$m = (''${auth_method_value}'' | Out-String).Trim().ToLower(); $ok = ($m -ne '''' -and $m -ne ''unknown''); @{ ok = $ok; method = $m } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
+      allow_fail: true
+      unsafe: true
+
+  - name: Read auth email trace (optional)
+    action: FS.Exists
+    register: has_auth_email_trace
+    params:
+      path: "${OUTPUT_DIR}\\odoo_auth_email_used.txt"
+
+  - name: Read auth email trace value
+    if: "${has_auth_email_trace}"
+    action: FS.ReadText
+    register: auth_email_value
+    params:
+      path: "${OUTPUT_DIR}\\odoo_auth_email_used.txt"
+
   - name: Connect to Odoo tab for live baseline verification
     if: "${has_odoo_url}"
     action: CDP.Connect
@@ -95,6 +136,7 @@ steps:
 
   - name: Navigate to Odoo URL for live baseline verification
     if: "${has_odoo_url}"
+    confirm_progress: false
     action: CDP.Navigate
     params:
       port: "${DEBUG_PORT}"
@@ -126,6 +168,15 @@ steps:
       overwrite: true
       value: "${odoo_live_verify}"
 
+  - name: Validate live session identity (uid + login)
+    if: "${has_odoo_url}"
+    action: Shell.RunJson
+    register: live_session_identity_check
+    params:
+      command: 'powershell -NoProfile -Command "$uid = [int](''${odoo_live_verify.session_uid}'' -as [int]); $login = (''${odoo_live_verify.session_login}'' | Out-String).Trim(); $ok = ($uid -gt 0 -and $login -ne ''''); @{ ok = $ok; uid = $uid; login = $login } | ConvertTo-Json -Compress; if ($ok) { exit 0 } else { exit 1 }"'
+      allow_fail: true
+      unsafe: true
+
   - name: Load Odoo migration parity verifier script
     if: "${has_odoo_url}"
     action: FS.ReadText
@@ -139,7 +190,7 @@ steps:
     register: odoo_live_migration_verify
     params:
       port: "${DEBUG_PORT}"
-      timeout_ms: 45000
+      timeout_ms: 120000
       await_promise: true
       expression: "${js_odoo_verify_migration_parity}"
 
@@ -227,7 +278,17 @@ steps:
           legacy_migration_checkpoint: "${has_legacy_migration_checkpoint}"
           odoo_solution_bundle_checkpoint: "${has_odoo_solution_bundle_checkpoint}"
           marketplace_mvp_checkpoint: "${has_marketplace_mvp_checkpoint}"
+          auth_method_trace: "${has_auth_method_trace}"
+          auth_identity_trace: "${has_auth_identity_trace}"
+          auth_method_ok: "${auth_method_check.json.ok}"
+          auth_method: "${auth_method_check.json.method}"
+          auth_email_trace: "${has_auth_email_trace}"
+          auth_email_value: "${auth_email_value}"
           odoo_live_verify_ok: "${odoo_live_verify.ok}"
+          odoo_live_verify_session_uid: "${odoo_live_verify.session_uid}"
+          odoo_live_verify_session_login: "${odoo_live_verify.session_login}"
+          odoo_live_verify_session_identity_ok: "${odoo_live_verify.session_identity_ok}"
+          odoo_live_verify_session_identity_check_ok: "${live_session_identity_check.json.ok}"
           odoo_live_verify_missing_modules: "${odoo_live_verify.missing_modules}"
           odoo_live_verify_company_brand_ok: "${odoo_live_verify.company_brand_ok}"
           odoo_live_verify_website_brand_ok: "${odoo_live_verify.website_brand_ok}"
@@ -323,8 +384,32 @@ steps:
     params:
       command: "exit 1"
 
+  - name: Abort if auth method trace is missing
+    if_not: "${has_auth_method_trace}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if auth identity trace is missing
+    if_not: "${has_auth_identity_trace}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if auth method trace is invalid
+    if: "${auth_method_check.exit_code}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
   - name: Abort if live Odoo verification failed
     if_not: "${odoo_live_verify.ok}"
+    action: Shell.Run
+    params:
+      command: "exit 1"
+
+  - name: Abort if live session identity is not verified
+    if: "${live_session_identity_check.exit_code}"
     action: Shell.Run
     params:
       command: "exit 1"

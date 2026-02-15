@@ -95,15 +95,18 @@
     limit: productCodes.length + 20
   });
 
-  const rowByCode = {};
+  const rowsByCode = {};
   for (const row of productRows || []) {
-    rowByCode[String(row.default_code || "")] = row;
+    const code = String(row.default_code || "");
+    if (!code) continue;
+    if (!rowsByCode[code]) rowsByCode[code] = [];
+    rowsByCode[code].push(row);
   }
 
   const productOps = { updated: 0, missing_products: [] };
   for (const code of productCodes) {
-    const row = rowByCode[code];
-    if (!row) {
+    const rows = rowsByCode[code] || [];
+    if (rows.length <= 0) {
       productOps.missing_products.push(code);
       continue;
     }
@@ -116,8 +119,10 @@
     if (productFieldSet.website_published) vals.website_published = true;
 
     if (Object.keys(vals).length > 0) {
-      await callKw("product.template", "write", [[row.id], vals], {});
-      productOps.updated += 1;
+      for (const row of rows) {
+        await callKw("product.template", "write", [[row.id], vals], {});
+        productOps.updated += 1;
+      }
     }
   }
 

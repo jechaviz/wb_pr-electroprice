@@ -14,6 +14,7 @@ steps:
       target_url_contains: ".odoo.com"
 
   - name: Navigate to Odoo instance
+    confirm_progress: false
     action: CDP.Navigate
     params:
       port: "${DEBUG_PORT}"

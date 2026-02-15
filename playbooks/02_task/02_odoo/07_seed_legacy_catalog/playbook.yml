@@ -13,12 +13,10 @@ steps:
       target_type: page
       target_url_contains: ".odoo.com"
 
-  - name: Navigate to Odoo instance
-    action: CDP.Navigate
+  - name: Wait for connected Odoo tab stability
+    action: CDP.Wait
     params:
-      port: "${DEBUG_PORT}"
-      url: "${ODOO_URL}"
-      wait_ms: 2500
+      ms: 600
 
   - name: Load legacy catalog seed script
     action: FS.ReadText
@@ -32,6 +30,7 @@ steps:
     params:
       port: "${DEBUG_PORT}"
       await_promise: true
+      timeout_ms: 180000
       expression: "${js_odoo_seed_legacy_catalog}"
 
   - name: Abort if legacy catalog seed did not complete

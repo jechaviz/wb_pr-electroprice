@@ -14,6 +14,7 @@ steps:
       target_url_contains: ".odoo.com"
 
   - name: Navigate to Odoo instance
+    confirm_progress: false
     action: CDP.Navigate
     params:
       port: "${DEBUG_PORT}"
@@ -34,6 +35,13 @@ steps:
       timeout_ms: 300000
       await_promise: true
       expression: "${js_odoo_marketplace_mvp_bootstrap}"
+
+  - name: Persist marketplace MVP bootstrap artifact
+    action: FS.WriteJson
+    params:
+      path: "${OUTPUT_DIR}\\odoo_marketplace_mvp_bootstrap.json"
+      overwrite: true
+      value: "${odoo_marketplace_mvp_result}"
 
   - name: Abort if marketplace MVP bootstrap failed
     if_not: "${odoo_marketplace_mvp_result.ok}"
@@ -56,18 +64,18 @@ steps:
       await_promise: true
       expression: "${js_odoo_marketplace_mvp_verify}"
 
-  - name: Abort if marketplace MVP verification failed
-    if_not: "${odoo_marketplace_mvp_verify.ok}"
-    action: Fail
-    params:
-      text: "Marketplace MVP verify failed: ${odoo_marketplace_mvp_verify.error}${odoo_marketplace_mvp_verify.reason}"
-
   - name: Persist marketplace MVP verification artifact
     action: FS.WriteJson
     params:
       path: "${OUTPUT_DIR}\\odoo_live_marketplace_mvp_verify.json"
       overwrite: true
       value: "${odoo_marketplace_mvp_verify}"
+
+  - name: Abort if marketplace MVP verification failed
+    if_not: "${odoo_marketplace_mvp_verify.ok}"
+    action: Fail
+    params:
+      text: "Marketplace MVP verify failed: ${odoo_marketplace_mvp_verify.error}${odoo_marketplace_mvp_verify.reason}"
 
   - name: Persist marketplace MVP checkpoint
     action: FS.WriteJson
