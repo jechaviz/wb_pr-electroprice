@@ -1,12 +1,12 @@
 steps:
-  - name: Ensure WAIBA_SKILLS_DIR is available
-    if_not: "${WAIBA_SKILLS_DIR}"
+  - name: Ensure WAIBA_PLAYBOOK_LIB_DIR is available
+    if_not: "${WAIBA_PLAYBOOK_LIB_DIR}"
     action: Fail
     params:
-      text: "Missing WAIBA_SKILLS_DIR before reusable Odoo branding."
+      text: "Missing WAIBA_PLAYBOOK_LIB_DIR before reusable Odoo branding."
 
   - name: Apply branding via reusable Odoo RPC skill
-    playbook: "${WAIBA_SKILLS_DIR}\\odoo\\odoo-rpc-playbooks\\playbooks\\02_branding_apply\\playbook.yml"
+    playbook: "${WAIBA_PLAYBOOK_LIB_DIR}\\odoo\\odoo-rpc-playbooks\\playbooks\\02_branding_apply\\playbook.yml"
     with:
       ODOO_BRAND_COMPANY: "Electroprice"
       ODOO_BRAND_WEBSITE: "Electroprice"

@@ -38,6 +38,12 @@ steps:
       name: WAIBA_SKILLS_DIR
       value: "${waiba_policy.skills_root}"
 
+  - name: Export migrated WAIBA shared playbook library root into context
+    action: Set
+    params:
+      name: WAIBA_PLAYBOOK_LIB_DIR
+      value: "C:\\git\\wb_pr\\_shared"
+
   - name: Import project skills from skills.yml
     action: Framework.Policy.ImportSkills
     register: waiba_skills_import

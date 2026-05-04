@@ -85,11 +85,12 @@ High-level flow:
 - `playbooks/03_finalize/01_validate/playbook.yml`
 
 Reusable source bundle location:
-- `%USERPROFILE%\\.waiba\\skills\\ecommerce\\odoo-online-playbooks\\playbooks\\01_trial_provision\\playbook.yml`
-- `%USERPROFILE%\\.waiba\\skills\\ecommerce\\odoo-online-playbooks\\playbooks\\02_instance_configure\\playbook.yml`
-- `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\01_modules_ensure\\playbook.yml`
-- `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\02_branding_apply\\playbook.yml`
-- `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\03_baseline_verify\\playbook.yml`
+- `WAIBA_PLAYBOOK_LIB_DIR` defaults to `C:\\git\\wb_pr\\_shared`.
+- `C:\\git\\wb_pr\\_shared\\ecommerce\\odoo-online-playbooks\\playbooks\\01_trial_provision\\playbook.yml`
+- `C:\\git\\wb_pr\\_shared\\ecommerce\\odoo-online-playbooks\\playbooks\\02_instance_configure\\playbook.yml`
+- `C:\\git\\wb_pr\\_shared\\odoo\\odoo-rpc-playbooks\\playbooks\\01_modules_ensure\\playbook.yml`
+- `C:\\git\\wb_pr\\_shared\\odoo\\odoo-rpc-playbooks\\playbooks\\02_branding_apply\\playbook.yml`
+- `C:\\git\\wb_pr\\_shared\\odoo\\odoo-rpc-playbooks\\playbooks\\03_baseline_verify\\playbook.yml`
 
 ### 4.3 Old-to-New Migration Mapping
 - Legacy source: `C:\\git\\customers\\bu\\electroprice`.

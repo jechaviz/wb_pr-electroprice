@@ -37,12 +37,12 @@
 - `secrets.yml`: project-local secrets (auto-created on bootstrap if missing).
 
 ## Reusable Playbook Imports
-- Reusable Odoo online phases live in `.waiba/skills` and are imported by this project:
-  - `%USERPROFILE%\\.waiba\\skills\\ecommerce\\odoo-online-playbooks\\playbooks\\01_trial_provision\\playbook.yml`
-  - `%USERPROFILE%\\.waiba\\skills\\ecommerce\\odoo-online-playbooks\\playbooks\\02_instance_configure\\playbook.yml`
-  - `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\01_modules_ensure\\playbook.yml`
-  - `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\02_branding_apply\\playbook.yml`
-  - `%USERPROFILE%\\.waiba\\skills\\odoo\\odoo-rpc-playbooks\\playbooks\\03_baseline_verify\\playbook.yml`
+- Reusable Odoo online phases live in the migrated WAIBA shared playbook library (`WAIBA_PLAYBOOK_LIB_DIR`, default `C:\\git\\wb_pr\\_shared`) and are imported by this project:
+  - `C:\\git\\wb_pr\\_shared\\ecommerce\\odoo-online-playbooks\\playbooks\\01_trial_provision\\playbook.yml`
+  - `C:\\git\\wb_pr\\_shared\\ecommerce\\odoo-online-playbooks\\playbooks\\02_instance_configure\\playbook.yml`
+  - `C:\\git\\wb_pr\\_shared\\odoo\\odoo-rpc-playbooks\\playbooks\\01_modules_ensure\\playbook.yml`
+  - `C:\\git\\wb_pr\\_shared\\odoo\\odoo-rpc-playbooks\\playbooks\\02_branding_apply\\playbook.yml`
+  - `C:\\git\\wb_pr\\_shared\\odoo\\odoo-rpc-playbooks\\playbooks\\03_baseline_verify\\playbook.yml`
 - Project wrappers (case-use import points):
   - `playbooks/02_task/02_odoo/01_trial_provision/playbook.yml`
   - `playbooks/02_task/02_odoo/02_instance_configure/playbook.yml`

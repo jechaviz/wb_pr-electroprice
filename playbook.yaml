@@ -14,6 +14,7 @@ variables:
   PROJECT_SKILL_N3: ""
   PROJECT_DIR: "${ROOT_PLAYBOOK_DIR}"
   PLAYBOOKS_DIR: "${PROJECT_DIR}\\playbooks"
+  WAIBA_PLAYBOOK_LIB_DIR: "C:\\git\\wb_pr\\_shared"
   TASK_NAME: "Operationalize Electroprice dropshipping on a verified user-owned Odoo instance"
   TASK_SUMMARY: "Sync electroprice repo, provision/configure Odoo for dropshipping, and complete with verified authenticated account identity and readiness artifacts."
   DEBUG_PORT: 9222
